@@ -44,7 +44,6 @@ pub fn to_vec_f64<const SIZE: usize>(yaml: &yaml_rust::Yaml) -> [f64; SIZE] {
 }
 
 pub fn load_atoms(yaml: &yaml_rust::Yaml) -> Vec<Atom> {
-  println!("{:?}", yaml);
   yaml
     .as_vec()
     .unwrap()

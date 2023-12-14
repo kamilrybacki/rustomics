@@ -37,7 +37,7 @@ impl SimulationSetup {
       .collect::<Vec<[f64; 3]>>()
       .try_into()
       .unwrap();
-    setup.system.atoms = load_atoms(&yaml["atoms"]);
+    setup.system.atoms = load_atoms(&system_definition["atoms"]);
     setup
   }
 }

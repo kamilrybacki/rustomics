@@ -6,7 +6,11 @@ system:
     - [0, 1, 0]
     - [0, 0, 1]
   atoms:
-    - Al: [0, 0, 0]
-    - Al: [0.5, 0.5, 0.0]
-    - Al: [0.5, 0.0, 0.5]
-    - Al: [0.0, 0.5, 0.5]
+    - name: Al
+      position: [0, 0, 0]
+    - name: Al
+      position: [0.5, 0.5, 0.0]
+    - name: Al
+      position: [0.5, 0.0, 0.5]
+    - name: Al
+      position: [0.0, 0.5, 0.5]

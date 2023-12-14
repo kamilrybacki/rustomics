@@ -1,3 +1,5 @@
+extern crate periodic_table;
+
 use crate::data::load::to_vec_f64;
 
 pub struct Atom {
@@ -23,14 +25,32 @@ impl Atom {
   pub fn from(yaml: &yaml_rust::Yaml) -> Atom {
     let mut atom = Atom::new();
     atom.position = to_vec_f64::<3>(&yaml["position"]);
-    atom.velocity = to_vec_f64::<3>(&yaml["velocity"]);
-    atom.force = to_vec_f64::<3>(&yaml["force"]);
-    atom.mass = yaml["mass"].as_f64().unwrap();
+    atom.velocity = match &yaml["velocity"] {
+      yaml_rust::Yaml::Array(_x) => to_vec_f64::<3>(&yaml["velocity"]),
+      _ => [0.0, 0.0, 0.0]
+    };
+    atom.force = match &yaml["force"] {
+      yaml_rust::Yaml::Array(_x) => to_vec_f64::<3>(&yaml["force"]),
+      _ => [0.0, 0.0, 0.0]
+    };
+    atom.name = String::from(yaml["name"].as_str().unwrap());
+    atom.mass = match &yaml["mass"] {
+      yaml_rust::Yaml::Real(x) => x.parse::<f64>().unwrap(),
+      yaml_rust::Yaml::String(x) => x.parse::<f64>().unwrap(),
+      yaml_rust::Yaml::Integer(x) => *x as f64,
+      yaml_rust::Yaml::BadValue => {
+        let element = periodic_table::periodic_table();
+        0.0
+      }
+      _ => {
+        println!("{:?}", &yaml["mass"]);
+        0.0
+      }
+    };
     atom.charge = match yaml["charge"].as_f64() {
       Some(x) => x,
       None => 0.0
     };
-    atom.name = yaml["name"].as_str().unwrap().to_string();
     atom
   }
 }
