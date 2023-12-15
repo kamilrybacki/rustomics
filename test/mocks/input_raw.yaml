@@ -14,3 +14,11 @@ system:
       position: [0.5, 0.0, 0.5]
     - name: Al
       position: [0.0, 0.5, 0.5]
+  periodicity: [true, true, true]
+units: atomic
+dynamics:
+  integrator: verlet
+  timestep: 1.0
+  total_time: 10.0
+  interval: 1
+  ensemble: nve

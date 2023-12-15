@@ -1,4 +1,4 @@
-extern crate periodic_table;
+extern crate periodic_table_on_an_enum;
 
 use crate::data::load::to_vec_f64;
 
@@ -39,18 +39,30 @@ impl Atom {
       yaml_rust::Yaml::String(x) => x.parse::<f64>().unwrap(),
       yaml_rust::Yaml::Integer(x) => *x as f64,
       yaml_rust::Yaml::BadValue => {
-        let element = periodic_table::periodic_table();
-        0.0
+        match periodic_table_on_an_enum::Element::from_symbol(atom.name.as_str()) {
+          Some(x) => x.get_atomic_mass().into(),
+          None => panic!("Failed to find mass for element {}!", atom.name)
+        }
       }
-      _ => {
-        println!("{:?}", &yaml["mass"]);
-        0.0
-      }
+      _ => panic!("Failed to find mass for element {}!", atom.name)
     };
-    atom.charge = match yaml["charge"].as_f64() {
-      Some(x) => x,
-      None => 0.0
+    atom.charge = match &yaml["charge"] {
+      yaml_rust::Yaml::Integer(x) => *x as f64,
+      yaml_rust::Yaml::Real(x) => x.parse::<f64>().unwrap(),
+      yaml_rust::Yaml::String(x) => x.parse::<f64>().unwrap(),
+      yaml_rust::Yaml::BadValue => 0.0,
+      _ => panic!("Incorrect charge for element {}!", atom.name)
     };
     atom
+  }
+}
+
+impl std::fmt::Display for Atom {
+  fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    write!(
+      f,
+      "{} [{:.2}u] @ ({:.3}, {:.3}, {:.3})",
+      self.name, self.mass, self.position[0], self.position[1], self.position[2]
+    )
   }
 }

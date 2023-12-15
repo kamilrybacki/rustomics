@@ -1,7 +1,7 @@
 use std::fs::read_to_string;
 use yaml_rust::Yaml;
 
-use crate::data::setup::SimulationSetup;
+use crate::data::setup::Simulation;
 use crate::system::base::atom::Atom;
 
 
@@ -13,14 +13,14 @@ fn parse_yaml(filepath: &String) -> yaml_rust::Yaml {
   script_yaml[0].clone()
 }
 
-pub fn load(filepath: &String) -> SimulationSetup {
+pub fn parse(filepath: &String) -> Simulation {
   let extension = filepath.split(".").last().unwrap();
   let script: yaml_rust::Yaml = match extension {
     "yaml" => parse_yaml(filepath),
     _ => panic!("Unknown file extension")
   };
-  let setup = SimulationSetup::from(script);
-  setup
+  let initialized_simulation_box = Simulation::from(script);
+  initialized_simulation_box
 }
 
 pub fn to_vec_f64<const SIZE: usize>(yaml: &yaml_rust::Yaml) -> [f64; SIZE] {

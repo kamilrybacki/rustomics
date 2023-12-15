@@ -1,5 +1,6 @@
 mod data;
 mod system;
+mod dynamics;
 
 fn main() {
     // Get filename from command line arguments
@@ -8,5 +9,6 @@ fn main() {
         panic!("No script file specified");
     }
     let script_filepath = String::from(&args[1]);
-    data::load::load(&script_filepath);
+    let simulation = data::load::parse(&script_filepath);
+    println!("{}", simulation);
 }
