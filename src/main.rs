@@ -1,6 +1,13 @@
 mod data;
-mod system;
 mod dynamics;
+mod engine;
+mod logic;
+mod setup;
+mod statics;
+mod system;
+mod utils;
+
+use engine::SimulationRunnerEngine;
 
 fn main() {
     // Get filename from command line arguments
@@ -8,7 +15,6 @@ fn main() {
     if args.len() < 2 {
         panic!("No script file specified");
     }
-    let script_filepath = String::from(&args[1]);
-    let simulation = data::load::parse(&script_filepath);
-    println!("{}", simulation);
+    let mut new_simulation = SimulationRunnerEngine::from_script(&args[1]);
+    new_simulation.run();
 }

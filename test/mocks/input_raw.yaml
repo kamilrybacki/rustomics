@@ -14,11 +14,23 @@ system:
       position: [0.5, 0.0, 0.5]
     - name: Al
       position: [0.0, 0.5, 0.5]
-  periodicity: [true, true, true]
+  periodicity: "xy"
 units: atomic
+logger:
+  redirects:
+    - file
+    - stdout
 dynamics:
-  integrator: verlet
+  integrator:
+    type: verlet
+    flavor: velocity
   timestep: 1.0
   total_time: 10.0
-  interval: 1
-  ensemble: nve
+thermodynamics:
+  ensemble:
+    type: nve
+potential:
+  model: lj
+  parameters:
+    epsilon: 1.0
+    sigma: 1.0
