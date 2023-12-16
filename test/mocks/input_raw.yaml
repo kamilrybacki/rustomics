@@ -1,6 +1,5 @@
 system:
   origin: [0, 0, 0]
-  units: angstrom
   vectors:
     - [1, 0, 0]
     - [0, 1, 0]
@@ -15,7 +14,7 @@ system:
     - name: Al
       position: [0.0, 0.5, 0.5]
   periodicity: "xy"
-units: atomic
+  units: atomic
 logger:
   redirects:
     - file
@@ -34,3 +33,6 @@ potential:
   parameters:
     epsilon: 1.0
     sigma: 1.0
+  cutoff: 2.5
+neighbours:
+  cutoff: 2.5

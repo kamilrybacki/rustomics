@@ -1,10 +1,10 @@
-pub mod equations;
+pub mod integrators;
 pub mod neighbours;
 
 use crate::system::base::atom::Atom;
 
 pub enum DynamicsIntegrator {
-    Verlet(equations::verlet::VerletIntegrator),
+    Verlet(integrators::verlet::VerletIntegrator),
 }
 
 impl DynamicsIntegrator {

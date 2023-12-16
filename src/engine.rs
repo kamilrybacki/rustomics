@@ -1,4 +1,4 @@
-use crate::setup::Simulation;
+use crate::simulation::Simulation;
 
 use crate::data::load::parse_yaml;
 use crate::system::thermodynamics::Thermodynamics;
@@ -39,7 +39,10 @@ impl SimulationRunnerEngine {
             );
             self.simulation
                 .potential_model
-                .update(&self.simulation.system.atoms);
+                .update(
+                  &self.simulation.system.atoms,
+                  &self.simulation.neighbours,
+                );
             self.thermodynamics.update(&self.simulation);
             self.logger.log(&self.simulation);
             self.simulation.clock.tick();

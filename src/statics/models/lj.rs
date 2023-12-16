@@ -1,4 +1,3 @@
-use crate::logic::algebra::euclidean_distance;
 use crate::statics::models::CalculatePotential;
 use yaml_rust::Yaml;
 
@@ -11,14 +10,14 @@ pub struct LennardJonesModel {
 impl LennardJonesModel {
     pub fn initialize(definition: &Yaml) -> LennardJonesModel {
         LennardJonesModel {
-            epsilon: definition["epsilon"].as_f64().unwrap(),
-            sigma: definition["sigma"].as_f64().unwrap(),
+            epsilon: definition["parameters"]["epsilon"].as_f64().unwrap(),
+            sigma: definition["parameters"]["sigma"].as_f64().unwrap(),
             cutoff: match &definition["cutoff"] {
                 Yaml::Real(cutoff) => match cutoff.parse::<f64>() {
                     Ok(cutoff) => cutoff,
                     Err(_) => panic!("Cutoff must be a real number"),
                 },
-                Yaml::BadValue => definition["sigma"].as_f64().unwrap() * 2.5,
+                Yaml::BadValue => definition["parameters"]["sigma"].as_f64().unwrap() * 2.5,
                 _ => panic!("Cutoff must be a real number"),
             },
         }

@@ -1,6 +1,6 @@
 use std::io::{self, Write};
 
-use crate::setup::Simulation;
+use crate::simulation::Simulation;
 
 const DEFAULT_LOGGER_FORMAT: &str = "id type x y z";
 

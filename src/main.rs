@@ -2,7 +2,7 @@ mod data;
 mod dynamics;
 mod engine;
 mod logic;
-mod setup;
+mod simulation;
 mod statics;
 mod system;
 mod utils;

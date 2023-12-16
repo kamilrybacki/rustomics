@@ -1,7 +1,6 @@
 mod lj;
 
 use crate::dynamics::neighbours::NeighboursList;
-use crate::logic::algebra::euclidean_norm;
 use crate::system::base::atom::Atom;
 
 pub enum PotentialModel {
@@ -25,7 +24,7 @@ impl PotentialModel {
             atom.force = [0.0; 3];
             atom.potential_energy = 0.0;
             neighbours_list
-                .get_neighbours(i)
+                .get_neighbours(i as u64)
                 .iter()
                 .for_each(|neighbour| {
                     atom.potential_energy += match self {

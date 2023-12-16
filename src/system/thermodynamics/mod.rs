@@ -1,6 +1,6 @@
 pub mod ensemble;
 
-use crate::setup::Simulation;
+use crate::simulation::Simulation;
 
 pub struct Thermodynamics {
     pub ensemble: ensemble::Ensemble,
