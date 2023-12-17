@@ -5,9 +5,9 @@ use core::fmt;
 use crate::statics::models::PotentialModel;
 use crate::system::SystemDefinition;
 
-use crate::dynamics::DynamicsIntegrator;
 use crate::dynamics::integrators::verlet::VerletIntegrator;
 use crate::dynamics::neighbours::NeighboursList;
+use crate::dynamics::DynamicsIntegrator;
 
 pub struct InternalClock {
     // Definition of the simulation length and time step
@@ -46,7 +46,7 @@ pub struct Simulation {
     pub integrator: DynamicsIntegrator, // Equations of motion numerical integrator
     pub clock: InternalClock,           // Internal clock for the simulation runtime
     pub potential_model: PotentialModel,
-    pub neighbours: NeighboursList
+    pub neighbours: NeighboursList,
 }
 
 impl Simulation {
@@ -65,7 +65,7 @@ impl Simulation {
                 dynamics_setup["timestep"].as_f64().unwrap(),
                 dynamics_setup["total_time"].as_f64().unwrap(),
             ),
-            neighbours: NeighboursList::from(&yaml["neighbours"])
+            neighbours: NeighboursList::from(&yaml["neighbours"]),
         }
     }
 }

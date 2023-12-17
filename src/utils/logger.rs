@@ -1,13 +1,17 @@
 use std::io::{self, Write};
 
 use crate::simulation::Simulation;
+use crate::dynamics::neighbours::NeighboursList;
 
 const DEFAULT_LOGGER_FORMAT: &str = "id type x y z";
+const DEFAULT_THERMODYNAMICS_TO_LOG: &str = "temperature potential_energy kinetic_energy total_energy";
 
 pub struct SimulationLogger {
     pub frequency: i64,
     pub format: String,
     pub redirects: Vec<fn(&str)>,
+    pub sections: Vec<String>,
+    pub thermo: String
 }
 
 fn print_to_stdout(message: &str) {
@@ -77,10 +81,26 @@ impl SimulationLogger {
             }
         }
 
+        let information_sections = match yaml["sections"].as_vec() {
+            Some(sections) => sections
+                .iter()
+                .map(|x| x.as_str().unwrap().to_string())
+                .collect::<Vec<String>>(),
+            None => vec![],
+        };
+
         SimulationLogger {
             frequency,
             format,
             redirects: valid_redirects,
+            sections: match information_sections.len() {
+                0 => vec!["thermo".to_string()],
+                _ => information_sections,
+            },
+            thermo: match yaml["thermo"].as_str() {
+                Some(x) => x.to_string(),
+                None => DEFAULT_THERMODYNAMICS_TO_LOG.to_string(),
+            }
         }
     }
     pub fn default() -> SimulationLogger {
@@ -88,18 +108,29 @@ impl SimulationLogger {
             frequency: 1,                              // Print every step
             format: DEFAULT_LOGGER_FORMAT.to_string(), // Print only positions
             redirects: vec![print_to_stdout],          // Print to STDOUT
+            sections: vec!["thermo".to_string()],      // Print only thermo
+            thermo: DEFAULT_THERMODYNAMICS_TO_LOG.to_string()
         }
     }
-    pub fn log(&self, simulation: &Simulation) -> () {
+    pub fn log_simulation_state(&self, simulation: &Simulation) -> () {
         if simulation.clock.current_step % self.frequency == 0 {
-            let log_entry = self.construct_log_message(simulation);
+            let log_entry = self.construct_simulation_log_message(simulation);
             println!(
                 "Logging step {}\n\n{}",
                 simulation.clock.current_step, log_entry
             );
         }
     }
-    fn construct_log_message(&self, simulation: &Simulation) -> String {
+    pub fn log_neighbours_list(&self, neighbours_list: &NeighboursList) -> () {
+        if neighbours_list.log {
+            println!("Logging neighbours list");
+            let current_neighbours_list = &neighbours_list.neighbours;
+            for (atom_id, neighbours) in current_neighbours_list.iter() {
+                println!("Atom {} has neighbours \n  {:?}", atom_id, neighbours);
+            }
+        }
+    }
+    fn construct_simulation_log_message(&self, simulation: &Simulation) -> String {
         let mut message = String::new();
         for atom in simulation.system.atoms.iter() {
             message.push_str(&format!("{} ", atom.id));

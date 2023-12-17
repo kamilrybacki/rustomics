@@ -32,19 +32,23 @@ impl SimulationRunnerEngine {
             self.simulation.clock.reset();
         }
         while !self.simulation.clock.has_finished() {
+            self.simulation.neighbours.update(
+                &self.simulation.system.atoms,
+            );
             self.simulation.integrator.next(
                 &mut self.simulation.system.atoms,
-                &self.simulation.system.vectors,
-                &self.simulation.system.periodicity,
+                &self.simulation.system.simulation_box.vectors,
+                &self.simulation.system.simulation_box.periodicity,
             );
-            self.simulation
-                .potential_model
-                .update(
-                  &self.simulation.system.atoms,
-                  &self.simulation.neighbours,
-                );
             self.thermodynamics.update(&self.simulation);
-            self.logger.log(&self.simulation);
+            self.simulation.potential_model.update(
+                &mut self.simulation.system.atoms,
+                &self.simulation.neighbours,
+            );
+            self.logger.log_simulation_state(&self.simulation);
+            if self.simulation.neighbours.log {
+                self.logger.log_neighbours_list(&self.simulation.neighbours);
+            }
             self.simulation.clock.tick();
         }
     }

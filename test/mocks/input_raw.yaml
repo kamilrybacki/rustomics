@@ -19,6 +19,12 @@ logger:
   redirects:
     - file
     - stdout
+  sections:
+    - atoms
+    - thermo
+  thermodynamics:
+    - temperature
+    - potential_energy
 dynamics:
   integrator:
     type: verlet
@@ -36,3 +42,5 @@ potential:
   cutoff: 2.5
 neighbours:
   cutoff: 2.5
+  frequency: 1
+  log: false

@@ -8,24 +8,24 @@ pub enum PotentialModel {
 }
 
 impl PotentialModel {
-    pub fn from(yaml: &yaml_rust::Yaml) -> PotentialModel {
-        match &yaml["potential"] {
+    pub fn from(potential_definition: &yaml_rust::Yaml) -> PotentialModel {
+        match &potential_definition["model"] {
             yaml_rust::Yaml::String(potential) => match potential.as_str() {
-                "LennardJones" => {
-                    PotentialModel::LennardJones(lj::LennardJonesModel::initialize(&yaml))
-                }
+                "lj" => PotentialModel::LennardJones(lj::LennardJonesModel::initialize(
+                    &potential_definition,
+                )),
                 _ => panic!("Potential model not implemented"),
             },
             _ => panic!("Potential model not implemented"),
         }
     }
-    pub fn update(&self, atoms: &Vec<Atom>, neighbours_list: &NeighboursList) -> () {
-        atoms.iter().enumerate().for_each(|(i, atom)| {
+    pub fn update(&self, atoms: &mut Vec<Atom>, neighbours_list: &NeighboursList) -> () {
+        atoms.iter_mut().enumerate().for_each(|(i, atom)| {
             atom.force = [0.0; 3];
             atom.potential_energy = 0.0;
             neighbours_list
                 .get_neighbours(i as u64)
-                .iter()
+                .iter_mut()
                 .for_each(|neighbour| {
                     atom.potential_energy += match self {
                         PotentialModel::LennardJones(model) => {
