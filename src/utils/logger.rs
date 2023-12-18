@@ -1,17 +1,18 @@
 use std::io::{self, Write};
 
-use crate::simulation::Simulation;
 use crate::dynamics::neighbours::NeighboursList;
+use crate::simulation::Simulation;
 
 const DEFAULT_LOGGER_FORMAT: &str = "id type x y z";
-const DEFAULT_THERMODYNAMICS_TO_LOG: &str = "temperature potential_energy kinetic_energy total_energy";
+const DEFAULT_THERMODYNAMICS_TO_LOG: &str =
+    "temperature potential_energy kinetic_energy total_energy";
 
 pub struct SimulationLogger {
-    pub frequency: i64,
-    pub format: String,
+    pub frequency: u64,
+    pub format: std::collections::HashMap<String, Vec<String>>,
     pub redirects: Vec<fn(&str)>,
     pub sections: Vec<String>,
-    pub thermo: String
+    pub thermo: String,
 }
 
 fn print_to_stdout(message: &str) {
@@ -19,7 +20,7 @@ fn print_to_stdout(message: &str) {
     io::stdout().flush().unwrap();
 }
 
-fn validate_format(yaml: &yaml_rust::Yaml) -> String {
+fn construct_format(yaml: &yaml_rust::Yaml) -> String {
     match yaml {
         yaml_rust::Yaml::BadValue => {
             println!("No format specified, using default");
@@ -35,7 +36,16 @@ fn validate_format(yaml: &yaml_rust::Yaml) -> String {
     }
 }
 
-fn validate_redirect(yaml: &yaml_rust::Yaml) -> Option<fn(&str)> {
+fn create_format_fields_map(format: String) -> std::collections::HashMap<String, Vec<String>> {
+    let fields_map = format
+      .split_whitespace()
+      .into_iter()
+      .map(|x| (x.to_string(), Vec::new()))
+      .collect::<std::collections::HashMap<String, Vec<String>>>();
+    return fields_map;
+}
+
+fn contruct_redirects(yaml: &yaml_rust::Yaml) -> Option<fn(&str)> {
     let redirect = yaml.as_str().unwrap();
     match redirect {
         "stdout" => return Some(print_to_stdout),
@@ -54,15 +64,18 @@ impl SimulationLogger {
     pub fn from(yaml: &yaml_rust::Yaml) -> SimulationLogger {
         let frequency = match yaml["frequency"] {
             yaml_rust::Yaml::BadValue => 1,
-            _ => yaml["frequency"].as_i64().unwrap(),
+            yaml_rust::Yaml::Integer(frequency) => match frequency > 0 {
+                true => frequency as u64,
+                false => panic!("Frequency must be a positive integer"),
+            },
+            _ => panic!("Frequency must be an integer"),
         };
-        let format = validate_format(&yaml["format"]);
 
         let mut valid_redirects: Vec<fn(&str)> = Vec::new();
         match yaml["redirects"].as_vec() {
             Some(redirects) => {
                 for redirect in redirects.iter() {
-                    match validate_redirect(redirect) {
+                    match contruct_redirects(redirect) {
                         Some(valid_redirect) => valid_redirects.push(valid_redirect),
                         None => continue,
                     }
@@ -91,7 +104,9 @@ impl SimulationLogger {
 
         SimulationLogger {
             frequency,
-            format,
+            format: create_format_fields_map(
+              construct_format(&yaml["format"])
+            ),
             redirects: valid_redirects,
             sections: match information_sections.len() {
                 0 => vec!["thermo".to_string()],
@@ -100,19 +115,23 @@ impl SimulationLogger {
             thermo: match yaml["thermo"].as_str() {
                 Some(x) => x.to_string(),
                 None => DEFAULT_THERMODYNAMICS_TO_LOG.to_string(),
-            }
+            },
         }
     }
+
     pub fn default() -> SimulationLogger {
         SimulationLogger {
             frequency: 1,                              // Print every step
-            format: DEFAULT_LOGGER_FORMAT.to_string(), // Print only positions
+            format: create_format_fields_map(
+              DEFAULT_LOGGER_FORMAT.to_string()
+            ), // Print only positions
             redirects: vec![print_to_stdout],          // Print to STDOUT
             sections: vec!["thermo".to_string()],      // Print only thermo
-            thermo: DEFAULT_THERMODYNAMICS_TO_LOG.to_string()
+            thermo: DEFAULT_THERMODYNAMICS_TO_LOG.to_string(),
         }
     }
-    pub fn log_simulation_state(&self, simulation: &Simulation) -> () {
+
+    pub fn log_simulation_state(&mut self, simulation: &Simulation) -> () {
         if simulation.clock.current_step % self.frequency == 0 {
             let log_entry = self.construct_simulation_log_message(simulation);
             println!(
@@ -121,6 +140,7 @@ impl SimulationLogger {
             );
         }
     }
+
     pub fn log_neighbours_list(&self, neighbours_list: &NeighboursList) -> () {
         if neighbours_list.log {
             println!("Logging neighbours list");
@@ -130,16 +150,30 @@ impl SimulationLogger {
             }
         }
     }
-    fn construct_simulation_log_message(&self, simulation: &Simulation) -> String {
-        let mut message = String::new();
-        for atom in simulation.system.atoms.iter() {
-            message.push_str(&format!("{} ", atom.id));
-            message.push_str(&format!("{} ", atom.name));
-            message.push_str(&format!("{} ", atom.position[0]));
-            message.push_str(&format!("{} ", atom.position[1]));
-            message.push_str(&format!("{} ", atom.position[2]));
-            message.push_str("\n");
-        }
-        return message;
+
+    fn construct_simulation_log_message(&mut self, simulation: &Simulation) -> String {
+      for atom in simulation.system.atoms.iter() {
+        self.format
+            .iter_mut()
+            .for_each(|(section, fields)| {
+              let field_value = match section.as_str() {
+                "id" => atom.id.to_string(),
+                "type" => atom.name.to_string(),
+                "x" => atom.position[0].to_string(),
+                "y" => atom.position[1].to_string(),
+                "z" => atom.position[2].to_string(),
+                "vx" => atom.velocity[0].to_string(),
+                "vy" => atom.velocity[1].to_string(),
+                "vz" => atom.velocity[2].to_string(),
+                "fx" => atom.force[0].to_string(),
+                "fy" => atom.force[1].to_string(),
+                "fz" => atom.force[2].to_string(),
+                _ => "".to_string(),
+              };
+              fields.push(field_value);
+            })
+      }
+      let message = String::new();
+      return message
     }
 }

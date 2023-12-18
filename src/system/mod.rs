@@ -11,9 +11,9 @@ use crate::system::base::atom::Atom;
 use crate::system::r#box::SimulationBox;
 
 pub struct SystemDefinition {
-    pub simulation_box: SimulationBox,      // Box origin and vectors
-    pub atoms: Vec<Atom>,       // Atom type, position, velocity, etc.
-    pub units: UnitSystem,      // Unit systems i.e. conversion factors
+    pub simulation_box: SimulationBox, // Box origin and vectors
+    pub atoms: Vec<Atom>,              // Atom type, position, velocity, etc.
+    pub units: UnitSystem,             // Unit systems i.e. conversion factors
 }
 
 impl SystemDefinition {

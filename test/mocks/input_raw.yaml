@@ -25,6 +25,8 @@ logger:
   thermodynamics:
     - temperature
     - potential_energy
+  format: "id x y z vx vy vz fx fy fz"
+  frequency: 2
 dynamics:
   integrator:
     type: verlet

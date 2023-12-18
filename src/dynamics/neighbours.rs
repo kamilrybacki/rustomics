@@ -6,8 +6,8 @@ use crate::system::base::atom::Atom;
 pub struct NeighboursList {
     pub neighbours: HashMap<u64, Vec<(u64, [f64; 3], f64)>>,
     pub log: bool,
+    pub frequency: u64,
     cutoff: f64,
-    frequency: u64,
 }
 
 pub struct NeighboursListEntry {

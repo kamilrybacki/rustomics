@@ -15,7 +15,7 @@ pub struct InternalClock {
     pub total_time: f64,
 
     // Runtime variables i.e. rolling time and step
-    pub current_step: i64,
+    pub current_step: u64,
     pub current_time: f64,
 }
 

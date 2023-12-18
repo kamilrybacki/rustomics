@@ -27,14 +27,19 @@ impl SimulationRunnerEngine {
         };
         return sim;
     }
+
     pub fn run(&mut self) -> () {
         if self.simulation.clock.current_step > 1 {
             self.simulation.clock.reset();
         }
         while !self.simulation.clock.has_finished() {
-            self.simulation.neighbours.update(
-                &self.simulation.system.atoms,
-            );
+            let should_update_neighbours =
+                self.simulation.clock.current_step % self.simulation.neighbours.frequency == 0;
+            if should_update_neighbours {
+                self.simulation
+                    .neighbours
+                    .update(&self.simulation.system.atoms);
+            }
             self.simulation.integrator.next(
                 &mut self.simulation.system.atoms,
                 &self.simulation.system.simulation_box.vectors,
