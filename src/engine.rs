@@ -42,7 +42,7 @@ impl SimulationRunnerEngine {
             }
             self.simulation.integrator.next(
                 &mut self.simulation.system.atoms,
-                &self.simulation.system.simulation_box.vectors,
+                &self.simulation.system.simulation_box.cell.vectors,
                 &self.simulation.system.simulation_box.periodicity,
             );
             self.thermodynamics.update(&self.simulation);

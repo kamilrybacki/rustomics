@@ -1,9 +1,9 @@
 system:
   origin: [0, 0, 0]
   vectors:
-    - [1, 0, 0]
-    - [0, 1, 0]
-    - [0, 0, 1]
+    - [2.45, 0, 0]
+    - [0, 2.45, 0]
+    - [0, 0, 2.45]
   atoms:
     - name: Al
       position: [0, 0, 0]
@@ -15,6 +15,7 @@ system:
       position: [0.0, 0.5, 0.5]
   periodicity: "xy"
   units: atomic
+  replicas: [2, 2, 2]
 logger:
   redirects:
     - file
@@ -27,6 +28,7 @@ logger:
     - potential_energy
   format: "id x y z vx vy vz fx fy fz"
   frequency: 2
+  precision: 3
 dynamics:
   integrator:
     type: verlet

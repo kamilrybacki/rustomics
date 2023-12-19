@@ -3,6 +3,8 @@ use std::collections::HashMap;
 use crate::logic::algebra::euclidean_norm;
 use crate::system::base::atom::Atom;
 
+use rayon::prelude::*;
+
 pub struct NeighboursList {
     pub neighbours: HashMap<u64, Vec<(u64, [f64; 3], f64)>>,
     pub log: bool,
@@ -38,26 +40,24 @@ impl NeighboursList {
         }
     }
     fn update_for_atom(&mut self, index: usize, atoms: &Vec<Atom>) -> () {
-        self.neighbours
-            .insert(index.try_into().unwrap(), Vec::new());
-        atoms.iter().enumerate().for_each(|(j, neighbour)| {
-            if j == index {
-                return;
-            }
+        let new_neighbours = atoms
+          .par_iter()
+          .enumerate()
+          .filter(|(j, _)| *j != index)
+          .map(|(j, neighbour)| {
             let distance_vector = [
-                neighbour.position[0] - atoms[index as usize].position[0],
-                neighbour.position[1] - atoms[index as usize].position[1],
-                neighbour.position[2] - atoms[index as usize].position[2],
+              neighbour.position[0] - atoms[index as usize].position[0],
+              neighbour.position[1] - atoms[index as usize].position[1],
+              neighbour.position[2] - atoms[index as usize].position[2],
             ];
             let distance = euclidean_norm(&distance_vector);
             if distance < self.cutoff {
-                self.neighbours.get_mut(&(index as u64)).unwrap().push((
-                    j as u64,
-                    distance_vector,
-                    distance,
-                ));
+              return (j.try_into().unwrap(), distance_vector, distance);
             }
-        })
+            return (j.try_into().unwrap(), distance_vector, distance);
+          });
+        self.neighbours
+            .insert(index.try_into().unwrap(), new_neighbours.collect());
     }
     pub fn update(&mut self, atoms: &Vec<Atom>) -> () {
         self.neighbours.clear();

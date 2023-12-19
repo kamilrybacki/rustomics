@@ -1,5 +1,7 @@
 use std::io::{self, Write};
 
+use rayon::prelude::*;
+
 use crate::dynamics::neighbours::NeighboursList;
 use crate::simulation::Simulation;
 
@@ -9,10 +11,11 @@ const DEFAULT_THERMODYNAMICS_TO_LOG: &str =
 
 pub struct SimulationLogger {
     pub frequency: u64,
-    pub format: std::collections::HashMap<String, Vec<String>>,
     pub redirects: Vec<fn(&str)>,
     pub sections: Vec<String>,
     pub thermo: String,
+    format: Vec<String>,
+    precision: usize,
 }
 
 fn print_to_stdout(message: &str) {
@@ -20,7 +23,7 @@ fn print_to_stdout(message: &str) {
     io::stdout().flush().unwrap();
 }
 
-fn construct_format(yaml: &yaml_rust::Yaml) -> String {
+fn construct_format(yaml: &yaml_rust::Yaml) -> Vec<String> {
     match yaml {
         yaml_rust::Yaml::BadValue => {
             println!("No format specified, using default");
@@ -34,15 +37,9 @@ fn construct_format(yaml: &yaml_rust::Yaml) -> String {
             }
         },
     }
-}
-
-fn create_format_fields_map(format: String) -> std::collections::HashMap<String, Vec<String>> {
-    let fields_map = format
-      .split_whitespace()
-      .into_iter()
-      .map(|x| (x.to_string(), Vec::new()))
-      .collect::<std::collections::HashMap<String, Vec<String>>>();
-    return fields_map;
+    .split_whitespace()
+    .map(|x| x.to_string())
+    .collect::<Vec<String>>()
 }
 
 fn contruct_redirects(yaml: &yaml_rust::Yaml) -> Option<fn(&str)> {
@@ -104,9 +101,7 @@ impl SimulationLogger {
 
         SimulationLogger {
             frequency,
-            format: create_format_fields_map(
-              construct_format(&yaml["format"])
-            ),
+            format: construct_format(&yaml["format"]),
             redirects: valid_redirects,
             sections: match information_sections.len() {
                 0 => vec!["thermo".to_string()],
@@ -116,28 +111,34 @@ impl SimulationLogger {
                 Some(x) => x.to_string(),
                 None => DEFAULT_THERMODYNAMICS_TO_LOG.to_string(),
             },
+            precision: match yaml["precision"].as_i64() {
+                Some(x) => x as usize,
+                None => 3,
+            },
         }
     }
 
     pub fn default() -> SimulationLogger {
         SimulationLogger {
             frequency: 1,                              // Print every step
-            format: create_format_fields_map(
-              DEFAULT_LOGGER_FORMAT.to_string()
-            ), // Print only positions
+            format: construct_format(
+              &yaml_rust::Yaml::String(DEFAULT_LOGGER_FORMAT.to_string())
+            ),
             redirects: vec![print_to_stdout],          // Print to STDOUT
             sections: vec!["thermo".to_string()],      // Print only thermo
             thermo: DEFAULT_THERMODYNAMICS_TO_LOG.to_string(),
+            precision: 3,
         }
     }
 
     pub fn log_simulation_state(&mut self, simulation: &Simulation) -> () {
         if simulation.clock.current_step % self.frequency == 0 {
-            let log_entry = self.construct_simulation_log_message(simulation);
             println!(
-                "Logging step {}\n\n{}",
-                simulation.clock.current_step, log_entry
+                "\nLogging step: {}\n\n{}\n",
+                simulation.clock.current_step,
+                self.format.join(" ")
             );
+            self.print_simulation_log_entry(simulation);
         }
     }
 
@@ -151,29 +152,35 @@ impl SimulationLogger {
         }
     }
 
-    fn construct_simulation_log_message(&mut self, simulation: &Simulation) -> String {
-      for atom in simulation.system.atoms.iter() {
-        self.format
-            .iter_mut()
-            .for_each(|(section, fields)| {
-              let field_value = match section.as_str() {
-                "id" => atom.id.to_string(),
-                "type" => atom.name.to_string(),
-                "x" => atom.position[0].to_string(),
-                "y" => atom.position[1].to_string(),
-                "z" => atom.position[2].to_string(),
-                "vx" => atom.velocity[0].to_string(),
-                "vy" => atom.velocity[1].to_string(),
-                "vz" => atom.velocity[2].to_string(),
-                "fx" => atom.force[0].to_string(),
-                "fy" => atom.force[1].to_string(),
-                "fz" => atom.force[2].to_string(),
-                _ => "".to_string(),
-              };
-              fields.push(field_value);
-            })
-      }
-      let message = String::new();
-      return message
+    fn print_simulation_log_entry(&mut self, simulation: &Simulation) -> () {
+      let messages = simulation.system.atoms
+        .par_iter()
+        .map(|atom| {
+          let mut atom_message = String::new();
+          for format in self.format.iter() {
+            match format.as_str() {
+              "id" => atom_message.push_str(&format!("{:} ", atom.id + 1)),
+              "x" => atom_message.push_str(&format!("{:.*} ", self.precision, atom.position[0])),
+              "y" => atom_message.push_str(&format!("{:.*} ", self.precision, atom.position[1])),
+              "z" => atom_message.push_str(&format!("{:.*} ", self.precision, atom.position[2])),
+              "type" => atom_message.push_str(&format!("{:} ", atom.name)),
+              "vx" => atom_message.push_str(&format!("{:.*} ", self.precision, atom.velocity[0])),
+              "vy" => atom_message.push_str(&format!("{:.*} ", self.precision, atom.velocity[1])),
+              "vz" => atom_message.push_str(&format!("{:.*} ", self.precision, atom.velocity[2])),
+              "fx" => atom_message.push_str(&format!("{:.*} ", self.precision, atom.force[0])),
+              "fy" => atom_message.push_str(&format!("{:.*} ", self.precision, atom.force[1])),
+              "fz" => atom_message.push_str(&format!("{:.*} ", self.precision, atom.force[2])),
+              "mass" => atom_message.push_str(&format!("{:.*} ", self.precision, atom.mass)),
+              "charge" => atom_message.push_str(&format!("{:.*} ", self.precision, atom.charge)),
+              "potential_energy" => atom_message.push_str(&format!("{:.*} ", self.precision, atom.potential_energy)),
+              // "kinetic_energy" => atom_message.push_str(&format!("{:.*} ", self.precision, atom.kinetic_energy())),
+              // "total_energy" => atom_message.push_str(&format!("{:.*} ", self.precision, atom.total_energy())),
+              _ => continue,
+            }
+          }
+          atom_message
+        })
+        .collect::<Vec<String>>();
+      println!("{}\n", messages.join("\n"));
     }
 }

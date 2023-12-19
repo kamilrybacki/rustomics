@@ -2,6 +2,7 @@ extern crate periodic_table_on_an_enum;
 
 use crate::data::load::to_vec_f64;
 
+#[derive(Debug)]
 pub struct Atom {
     pub id: u64,
     pub name: String,
@@ -58,6 +59,18 @@ impl Atom {
             _ => panic!("Incorrect charge for element {}!", atom.name),
         };
         atom
+    }
+    pub fn clone(&self) -> Atom {
+        Atom {
+            id: self.id,
+            name: self.name.clone(),
+            position: self.position,
+            velocity: self.velocity,
+            force: self.force,
+            mass: self.mass,
+            charge: self.charge,
+            potential_energy: self.potential_energy,
+        }
     }
 }
 

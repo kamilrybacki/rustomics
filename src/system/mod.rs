@@ -9,6 +9,7 @@ use crate::data::load::to_vec_f64;
 use crate::data::metrics::UnitSystem;
 use crate::system::base::atom::Atom;
 use crate::system::r#box::SimulationBox;
+use crate::system::base::lattice::generate_lattice;
 
 pub struct SystemDefinition {
     pub simulation_box: SimulationBox, // Box origin and vectors
@@ -18,8 +19,14 @@ pub struct SystemDefinition {
 
 impl SystemDefinition {
     pub fn from(system_definition: &Yaml) -> SystemDefinition {
-        let box_origin = to_vec_f64::<3>(&system_definition["origin"]);
-        let box_vectors = system_definition["vectors"]
+        let mut new_system = SystemDefinition::initialize_system(system_definition);
+        scale_cell_basis(&mut new_system.atoms, &new_system.simulation_box);
+        generate_lattice(&mut new_system.atoms, &new_system.simulation_box);
+        new_system
+    }
+    fn initialize_system(config: &Yaml) -> SystemDefinition {
+        let box_origin = to_vec_f64::<3>(&config["origin"]);
+        let box_vectors = config["vectors"]
             .as_vec()
             .unwrap()
             .iter()
@@ -27,7 +34,7 @@ impl SystemDefinition {
             .collect::<Vec<[f64; 3]>>()
             .try_into()
             .unwrap();
-        let box_periodicity = match &system_definition["periodicity"] {
+        let box_periodicity = match &config["periodicity"] {
             Yaml::BadValue => [false, false, false],
             Yaml::String(x) => match x.as_str() {
                 "xyz" => [true, true, true],
@@ -49,11 +56,22 @@ impl SystemDefinition {
             },
             _ => panic!("Unknown periodicity"),
         };
-
+        let unit_cell_replications = match &config["replicas"] {
+            Yaml::BadValue => [1, 1, 1],
+            Yaml::Array(x) => match x.len() {
+                3 => [
+                    x[0].as_i64().unwrap() as usize,
+                    x[1].as_i64().unwrap() as usize,
+                    x[2].as_i64().unwrap() as usize,
+                ],
+                _ => panic!("Unknown replicas"),
+            },
+            _ => panic!("Unknown replicas"),
+        };
         SystemDefinition {
-            simulation_box: SimulationBox::new(box_origin, box_vectors, box_periodicity),
-            atoms: load_atoms(&system_definition["atoms"]),
-            units: UnitSystem::new(&system_definition["units"]),
+            simulation_box: SimulationBox::new(box_origin, box_vectors, box_periodicity, unit_cell_replications),
+            atoms: load_atoms(&config["atoms"]),
+            units: UnitSystem::new(&config["units"]),
         }
     }
 }
