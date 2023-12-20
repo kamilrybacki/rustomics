@@ -1,5 +1,7 @@
 mod lj;
 
+use rayon::prelude::*;
+
 use crate::dynamics::neighbours::NeighboursList;
 use crate::system::base::atom::Atom;
 
@@ -20,7 +22,10 @@ impl PotentialModel {
         }
     }
     pub fn update(&self, atoms: &mut Vec<Atom>, neighbours_list: &NeighboursList) -> () {
-        atoms.iter_mut().enumerate().for_each(|(i, atom)| {
+        atoms
+          .par_iter_mut()
+          .enumerate()
+          .for_each(|(i, atom)| {
             atom.force = [0.0; 3];
             atom.potential_energy = 0.0;
             neighbours_list

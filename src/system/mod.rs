@@ -9,6 +9,8 @@ use crate::data::load::to_vec_f64;
 use crate::data::metrics::UnitSystem;
 use crate::system::base::atom::Atom;
 use crate::system::r#box::SimulationBox;
+
+use crate::system::base::lattice::scale_cell_basis;
 use crate::system::base::lattice::generate_lattice;
 
 pub struct SystemDefinition {

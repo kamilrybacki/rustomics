@@ -12,10 +12,21 @@ pub struct NeighboursList {
     cutoff: f64,
 }
 
+#[derive(Debug)]
 pub struct NeighboursListEntry {
     pub index: u64,
     pub distance_vector: [f64; 3],
     pub distance: f64,
+}
+
+impl std::fmt::Display for NeighboursListEntry {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(
+            f,
+            "(index: {}, distance_vector: {:?}, distance: {})",
+            self.index, self.distance_vector, self.distance
+        )
+    }
 }
 
 impl NeighboursList {
@@ -80,5 +91,11 @@ impl NeighboursList {
                 })
                 .collect(),
         }
+    }
+}
+
+impl std::fmt::Display for NeighboursList {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "{:?}", self.neighbours)
     }
 }

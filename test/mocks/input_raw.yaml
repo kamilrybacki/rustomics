@@ -43,8 +43,8 @@ potential:
   parameters:
     epsilon: 1.0
     sigma: 1.0
-  cutoff: 2.5
+  cutoff: 4.0
 neighbours:
-  cutoff: 2.5
+  cutoff: 4.0
   frequency: 1
   log: false
