@@ -40,16 +40,17 @@ impl SimulationRunnerEngine {
                     .neighbours
                     .update(&self.simulation.system.atoms);
             }
-            self.simulation.integrator.next(
+            self.simulation.integrator.next_positions(
                 &mut self.simulation.system.atoms,
-                &self.simulation.system.simulation_box.cell.vectors,
-                &self.simulation.system.simulation_box.periodicity,
             );
-            self.thermodynamics.update(&self.simulation);
             self.simulation.potential_model.update(
                 &mut self.simulation.system.atoms,
                 &self.simulation.neighbours,
             );
+            self.simulation.integrator.next_velocities(
+                &mut self.simulation.system.atoms,
+            );
+            self.thermodynamics.update(&self.simulation);
             self.logger.log_simulation_state(&self.simulation);
             if self.simulation.neighbours.log {
                 self.logger.log_neighbours_list(&self.simulation.neighbours);

@@ -1,3 +1,5 @@
+use rayon::prelude::*;
+
 use crate::system::base::atom::Atom;
 
 use crate::dynamics::NextStepCalculation;
@@ -19,6 +21,31 @@ impl VerletIntegrator {
     pub fn new(timestep: f64, flavor: String) -> VerletIntegrator {
         VerletIntegrator { timestep, flavor }
     }
+    pub fn basic_verlet(
+        &mut self,
+        atoms: &mut Vec<Atom>,
+    ) -> () {
+        println!("Basic Verlet integrator")
+    }
+
+    pub fn velocity_verlet(
+        &mut self,
+        atoms: &mut Vec<Atom>,
+    ) -> () {
+      atoms
+        .par_iter_mut()
+        .for_each(|atom| {
+          for dimension in 0..3 {
+          }
+        });
+    }
+
+    pub fn leapfrog_verlet(
+        &mut self,
+        atoms: &mut Vec<Atom>,
+    ) -> () {
+        println!("Leapfrog Verlet integrator")
+    }
 }
 
 impl std::fmt::Display for VerletIntegrator {
@@ -28,41 +55,28 @@ impl std::fmt::Display for VerletIntegrator {
 }
 
 impl NextStepCalculation for VerletIntegrator {
-    fn next(
+    fn next_positions(
         &mut self,
         atoms: &mut Vec<Atom>,
-        box_vectors: &[[f64; 3]; 3],
-        periodicity: &[bool; 3],
     ) -> () {
-        match self.flavor.as_str() {
-            "basic" => basic_verlet(atoms, box_vectors, periodicity),
-            "velocity" => velocity_verlet(atoms, box_vectors, periodicity),
-            "leapfrog" => leapfrog_verlet(atoms, box_vectors, periodicity),
-            _ => panic!("Unknown Verlet integrator flavor"),
-        }
+      // atom.current.position[dimension] = atom.position[dimension] + atom.velocity[dimension] * self.timestep + 0.5 * atom.force[dimension] / atom.mass * self.timestep.powi(2);
+      atoms
+        .par_iter_mut()
+        .for_each(|atom| {
+          for dimension in 0..3 {
+            atom.current.position[dimension] = match self.flavor.as_str() {
+              "velocity" => atom.current.position[dimension] + atom.current.velocity[dimension] * self.timestep + 0.5 * atom.current.force[dimension] / atom.mass * self.timestep.powi(2),
+              "basic" => atom.current.position[dimension] + atom.current.velocity[dimension] * self.timestep,
+              _ => panic!("Unknown flavor"),
+            };
+          }
+        });
+    }
+    fn next_velocities(
+            &mut self,
+            atoms: &mut Vec<Atom>,
+        ) -> () {
+        
     }
 }
 
-pub fn basic_verlet(
-    atoms: &mut Vec<Atom>,
-    box_vectors: &[[f64; 3]; 3],
-    periodicity: &[bool; 3],
-) -> () {
-    println!("Basic Verlet integrator")
-}
-
-pub fn velocity_verlet(
-    atoms: &mut Vec<Atom>,
-    box_vectors: &[[f64; 3]; 3],
-    periodicity: &[bool; 3],
-) -> () {
-    println!("Velocity Verlet integrator")
-}
-
-pub fn leapfrog_verlet(
-    atoms: &mut Vec<Atom>,
-    box_vectors: &[[f64; 3]; 3],
-    periodicity: &[bool; 3],
-) -> () {
-    println!("Leapfrog Verlet integrator")
-}

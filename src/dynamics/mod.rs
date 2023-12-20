@@ -8,14 +8,20 @@ pub enum DynamicsIntegrator {
 }
 
 impl DynamicsIntegrator {
-    pub fn next(
+    pub fn next_positions(
         &mut self,
         atoms: &mut Vec<Atom>,
-        box_vectors: &[[f64; 3]; 3],
-        periodicity: &[bool; 3],
     ) -> () {
         match self {
-            DynamicsIntegrator::Verlet(x) => x.next(atoms, box_vectors, periodicity),
+            DynamicsIntegrator::Verlet(x) => x.next_positions(atoms),
+        }
+    }
+    pub fn next_velocities(
+        &mut self,
+        atoms: &mut Vec<Atom>,
+    ) -> () {
+        match self {
+            DynamicsIntegrator::Verlet(x) => x.next_velocities(atoms),
         }
     }
 }
@@ -30,12 +36,17 @@ impl std::fmt::Display for DynamicsIntegrator {
     }
 }
 
+#[allow(unused_variables)]
 trait NextStepCalculation {
-    fn next(
+    fn next_positions(
         &mut self,
         atoms: &mut Vec<Atom>,
-        box_vectors: &[[f64; 3]; 3],
-        periodicity: &[bool; 3],
+    ) -> () {
+        panic!("Not implemented");
+    }
+    fn next_velocities(
+        &mut self,
+        atoms: &mut Vec<Atom>,
     ) -> () {
         panic!("Not implemented");
     }

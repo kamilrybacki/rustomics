@@ -26,13 +26,13 @@ impl PotentialModel {
           .par_iter_mut()
           .enumerate()
           .for_each(|(i, atom)| {
-            atom.force = [0.0; 3];
-            atom.potential_energy = 0.0;
+            atom.current.force = [0.0; 3];
+            atom.current.potential_energy = 0.0;
             neighbours_list
                 .get_neighbours(i as u64)
                 .iter_mut()
                 .for_each(|neighbour| {
-                    atom.potential_energy += match self {
+                    atom.current.potential_energy += match self {
                         PotentialModel::LennardJones(model) => {
                             model.calculate_potential(neighbour.distance)
                         }
@@ -42,10 +42,10 @@ impl PotentialModel {
                             model.calculate_force(neighbour.distance)
                         }
                     };
-                    atom.force = [
-                        atom.force[0] + force * neighbour.distance_vector[0] / neighbour.distance,
-                        atom.force[1] + force * neighbour.distance_vector[1] / neighbour.distance,
-                        atom.force[2] + force * neighbour.distance_vector[2] / neighbour.distance,
+                    atom.current.force = [
+                        atom.current.force[0] + force * neighbour.distance_vector[0] / neighbour.distance,
+                        atom.current.force[1] + force * neighbour.distance_vector[1] / neighbour.distance,
+                        atom.current.force[2] + force * neighbour.distance_vector[2] / neighbour.distance,
                     ];
                 })
         })

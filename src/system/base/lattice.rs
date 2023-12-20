@@ -11,11 +11,11 @@ pub fn scale_cell_basis(
   atoms
     .par_iter_mut()
     .for_each(|atom| {
-      atom
-        .position
-        .par_iter_mut()
-        .zip(simulation_box.cell.vectors.par_iter())
-        .for_each(|(position, vector)| *position *= vector[vector.len() - 1]);
+      let mut scaled_position = [0.0; 3];
+      for i in 0..3 {
+        scaled_position[i] = atom.current.position[i] * simulation_box.cell.vectors[i][i];
+      }
+      atom.current.position = scaled_position;
     });
 }
 
@@ -40,10 +40,9 @@ pub fn generate_lattice(
             .par_iter()
             .map(|atom| {
               let mut new_atom = atom.clone();
-              new_atom.position[0] += x as f64 * simulation_box.cell.vectors[0][0];
-              new_atom.position[1] += y as f64 * simulation_box.cell.vectors[1][1];
-              new_atom.position[2] += z as f64 * simulation_box.cell.vectors[2][2];
-              println!("{} {} {}: {:?}", x, y, z, new_atom.position);
+              new_atom.current.position[0] += x as f64 * simulation_box.cell.vectors[0][0];
+              new_atom.current.position[1] += y as f64 * simulation_box.cell.vectors[1][1];
+              new_atom.current.position[2] += z as f64 * simulation_box.cell.vectors[2][2];
               new_atom
             })
             .collect::<Vec<Atom>>();

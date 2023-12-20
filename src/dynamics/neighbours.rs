@@ -57,9 +57,9 @@ impl NeighboursList {
           .filter(|(j, _)| *j != index)
           .map(|(j, neighbour)| {
             let distance_vector = [
-              neighbour.position[0] - atoms[index as usize].position[0],
-              neighbour.position[1] - atoms[index as usize].position[1],
-              neighbour.position[2] - atoms[index as usize].position[2],
+              neighbour.current.position[0] - atoms[index as usize].current.position[0],
+              neighbour.current.position[1] - atoms[index as usize].current.position[1],
+              neighbour.current.position[2] - atoms[index as usize].current.position[2],
             ];
             let distance = euclidean_norm(&distance_vector);
             if distance < self.cutoff {
