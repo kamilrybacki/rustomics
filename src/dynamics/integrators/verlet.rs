@@ -21,31 +21,6 @@ impl VerletIntegrator {
     pub fn new(timestep: f64, flavor: String) -> VerletIntegrator {
         VerletIntegrator { timestep, flavor }
     }
-    pub fn basic_verlet(
-        &mut self,
-        atoms: &mut Vec<Atom>,
-    ) -> () {
-        println!("Basic Verlet integrator")
-    }
-
-    pub fn velocity_verlet(
-        &mut self,
-        atoms: &mut Vec<Atom>,
-    ) -> () {
-      atoms
-        .par_iter_mut()
-        .for_each(|atom| {
-          for dimension in 0..3 {
-          }
-        });
-    }
-
-    pub fn leapfrog_verlet(
-        &mut self,
-        atoms: &mut Vec<Atom>,
-    ) -> () {
-        println!("Leapfrog Verlet integrator")
-    }
 }
 
 impl std::fmt::Display for VerletIntegrator {
@@ -59,7 +34,6 @@ impl NextStepCalculation for VerletIntegrator {
         &mut self,
         atoms: &mut Vec<Atom>,
     ) -> () {
-      // atom.current.position[dimension] = atom.position[dimension] + atom.velocity[dimension] * self.timestep + 0.5 * atom.force[dimension] / atom.mass * self.timestep.powi(2);
       atoms
         .par_iter_mut()
         .for_each(|atom| {
@@ -73,10 +47,9 @@ impl NextStepCalculation for VerletIntegrator {
         });
     }
     fn next_velocities(
-            &mut self,
-            atoms: &mut Vec<Atom>,
-        ) -> () {
-        
+        &mut self,
+        atoms: &mut Vec<Atom>,
+    ) -> () {
     }
 }
 
