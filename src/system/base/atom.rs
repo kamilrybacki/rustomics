@@ -22,6 +22,19 @@ pub struct PreviousState {
     pub total_energy: f64,
 }
 
+impl CurrentState {
+    pub fn cache(&self) -> PreviousState {
+      PreviousState {
+        position: self.position,
+        velocity: self.velocity,
+        force: self.force,
+        potential_energy: self.potential_energy,
+        kinetic_energy: self.kinetic_energy,
+        total_energy: self.total_energy,
+      }
+    }
+}
+
 #[derive(Debug)]
 pub struct Atom {
     pub id: u64,

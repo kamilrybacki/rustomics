@@ -26,6 +26,7 @@ impl PotentialModel {
           .par_iter_mut()
           .enumerate()
           .for_each(|(i, atom)| {
+            atom.previous = atom.current.cache();
             atom.current.force = [0.0; 3];
             atom.current.potential_energy = 0.0;
             neighbours_list
