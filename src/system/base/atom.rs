@@ -3,7 +3,7 @@ extern crate periodic_table_on_an_enum;
 use crate::data::load::to_vec_f64;
 
 #[derive(Debug)]
-struct CurrentState {
+pub struct CurrentState {
     pub position: [f64; 3],
     pub velocity: [f64; 3],
     pub force: [f64; 3],
