@@ -131,18 +131,28 @@ impl SimulationLogger {
         }
     }
 
-    pub fn log_simulation_state(&mut self, simulation: &Simulation) -> () {
-        if simulation.clock.current_step % self.frequency == 0 {
-            println!(
-                "\nLogging step: {}\n\n{}\n",
-                simulation.clock.current_step,
-                self.format.join(" ")
-            );
-            self.print_simulation_log_entry(simulation);
+    pub fn log_simulation_header(&self, simulation: &Simulation) -> () {
+        let header: String = "# Starting simulation".to_string();
+        for redirect in self.redirects.iter() {
+            redirect(&header);
         }
     }
 
-    pub fn log_neighbours_list(&self, neighbours_list: &NeighboursList) -> () {
+    pub fn log_simulation_state(&self, simulation: &Simulation) -> () {
+        if simulation.clock.current_step % self.frequency == 0 {
+            for redirect in self.redirects.iter() {
+              println!(
+                  "\nLogging step: {}\n\n{}\n",
+                  simulation.clock.current_step,
+                  self.format.join(" ")
+              );
+              let log_entry = self.construct_simulation_state_log(simulation);
+              redirect(&log_entry.join("\n"));
+            }
+        }
+    }
+
+    pub fn construct_neighbours_list_log(&self, neighbours_list: &NeighboursList) -> () {
         if neighbours_list.log {
             println!("Logging neighbours list");
             let current_neighbours_list = &neighbours_list.neighbours;
@@ -152,8 +162,8 @@ impl SimulationLogger {
         }
     }
 
-    fn print_simulation_log_entry(&mut self, simulation: &Simulation) -> () {
-      let messages = simulation.system.atoms
+    fn construct_simulation_state_log(&self, simulation: &Simulation) -> Vec<String> {
+      let mut messages = simulation.system.atoms
         .par_iter()
         .map(|atom| {
           let mut atom_message = String::new();
@@ -181,6 +191,7 @@ impl SimulationLogger {
           atom_message
         })
         .collect::<Vec<String>>();
-      println!("{}\n", messages.join("\n"));
+      messages.push("\n\n".to_string());
+      messages
     }
 }

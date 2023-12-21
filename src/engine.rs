@@ -29,6 +29,7 @@ impl SimulationRunnerEngine {
     }
 
     pub fn run(&mut self) -> () {
+        self.logger.log_simulation_header(&self.simulation);
         if self.simulation.clock.current_step > 1 {
             self.simulation.clock.reset();
         }
@@ -53,7 +54,7 @@ impl SimulationRunnerEngine {
             self.thermodynamics.update(&self.simulation);
             self.logger.log_simulation_state(&self.simulation);
             if self.simulation.neighbours.log {
-                self.logger.log_neighbours_list(&self.simulation.neighbours);
+                self.logger.construct_neighbours_list_log(&self.simulation.neighbours);
             }
             self.simulation.clock.tick();
         }

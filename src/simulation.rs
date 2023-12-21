@@ -2,6 +2,8 @@ extern crate yaml_rust;
 
 use core::fmt;
 
+use yaml_rust::Yaml;
+
 use crate::statics::models::PotentialModel;
 use crate::system::SystemDefinition;
 
@@ -54,6 +56,13 @@ impl Simulation {
         let dynamics_setup = &yaml["dynamics"];
         let system_definition = &yaml["system"];
 
+        let timestep = dynamics_setup["timestep"].as_f64().unwrap();
+        let calculated_total_time = match &dynamics_setup["total_time"] {
+            Yaml::Real(x) => x.parse::<f64>().unwrap(),
+            Yaml::BadValue => dynamics_setup["steps"].as_i64().unwrap() as f64 * timestep,
+            _ => dynamics_setup["steps"].as_i64().unwrap() as f64 * timestep,
+        };
+
         Simulation {
             system: SystemDefinition::from(system_definition),
             potential_model: PotentialModel::from(&yaml["potential"]),
@@ -62,8 +71,8 @@ impl Simulation {
                 _ => panic!("Unknown integrator"),
             },
             clock: InternalClock::new(
-                dynamics_setup["timestep"].as_f64().unwrap(),
-                dynamics_setup["total_time"].as_f64().unwrap(),
+                timestep,
+                calculated_total_time,
             ),
             neighbours: NeighboursList::from(&yaml["neighbours"]),
         }
