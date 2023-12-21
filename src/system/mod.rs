@@ -3,6 +3,7 @@ pub mod r#box;
 pub mod thermodynamics;
 
 use yaml_rust::Yaml;
+use rayon::prelude::*;
 
 use crate::data::load::load_atoms;
 use crate::data::load::to_vec_f64;
@@ -75,6 +76,19 @@ impl SystemDefinition {
             atoms: load_atoms(&config["atoms"]),
             units: UnitSystem::new(&config["units"]),
         }
+    }
+    pub fn wrap_atom_positions(&mut self) -> () {
+        self.atoms
+            .par_iter_mut()
+            .for_each(|atom| {
+                for dimension in 0..3 {
+                    if atom.current.position[dimension] < 0.0 {
+                        atom.current.position[dimension] += self.simulation_box.cell.vectors[dimension][dimension];
+                    } else if atom.current.position[dimension] > self.simulation_box.cell.vectors[dimension][dimension] {
+                        atom.current.position[dimension] -= self.simulation_box.cell.vectors[dimension][dimension];
+                    }
+                }
+            });
     }
 }
 

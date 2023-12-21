@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::io::{self, Write};
 
 use rayon::prelude::*;
@@ -5,16 +6,24 @@ use rayon::prelude::*;
 use crate::dynamics::neighbours::NeighboursList;
 use crate::simulation::Simulation;
 
-const DEFAULT_LOGGER_FORMAT: &str = "id type x y z";
-const DEFAULT_THERMODYNAMICS_TO_LOG: &str =
-    "temperature potential_energy kinetic_energy total_energy";
+const DEFAULT_FORMATS_FOR_SECTIONS: HashMap<&str, &str> = HashMap::from([
+    ("thermo", "step temperature potential_energy kinetic_energy total_energy"),
+    ("neighbours", "id type x y z"),
+    ("atoms", "id type x y z vx vy vz fx fy fz mass charge potential_energy kinetic_energy total_energy"),
+]);
+const DEFAULT_PRECISION: usize = 3;
+
+pub struct LogsRedirect {
+    pub name: String,
+    pub sections: HashMap<String, Vec<String>>,
+    pub precision: usize,
+    pub handler: fn(&str),
+    options: HashMap<String, String>,
+}
 
 pub struct SimulationLogger {
     pub frequency: u64,
-    pub redirects: Vec<fn(&str)>,
-    pub sections: Vec<String>,
-    pub thermo: String,
-    format: Vec<String>,
+    pub redirects: Vec<LogsRedirect>,
     precision: usize,
 }
 
@@ -23,29 +32,75 @@ fn print_to_stdout(message: &str) {
     io::stdout().flush().unwrap();
 }
 
-fn construct_format(yaml: &yaml_rust::Yaml) -> Vec<String> {
-    match yaml {
+fn construct_format(section_yaml: &yaml_rust::Yaml, section_type: &str) -> Vec<String> {
+    match section_yaml["format"] {
         yaml_rust::Yaml::BadValue => {
             println!("No format specified, using default");
-            DEFAULT_LOGGER_FORMAT.to_string()
+            DEFAULT_FORMATS_FOR_SECTIONS
+              .get(section_type)
+              .unwrap()
+              .split_whitespace()
+              .map(|x| x.to_string())
+              .collect::<Vec<String>>()
         }
-        _ => match yaml.as_str() {
-            Some(x) => x.to_string(),
+        yaml_rust::Yaml::Array(x) => x
+            .iter()
+            .map(|x| x.as_str().unwrap().to_string())
+            .collect::<Vec<String>>(),
+        yaml_rust::Yaml::String(x) => x
+            .split_whitespace()
+            .map(|x| x.to_string())
+            .collect::<Vec<String>>(),
+        _ => match section_yaml.as_str() {
+            Some(x) => x
+                .split_whitespace()
+                .map(|x| x.to_string())
+                .collect::<Vec<String>>(),
             _ => {
-                println!("Unknown format {:?}, using default", yaml);
-                DEFAULT_LOGGER_FORMAT.to_string()
+                println!("Unknown format {:?}, using default", section_yaml);
+                DEFAULT_FORMATS_FOR_SECTIONS
+                  .get(section_type)
+                  .unwrap()
+                  .split_whitespace()
+                  .map(|x| x.to_string())
+                  .collect::<Vec<String>>()
             }
         },
     }
-    .split_whitespace()
-    .map(|x| x.to_string())
-    .collect::<Vec<String>>()
 }
 
-fn contruct_redirects(yaml: &yaml_rust::Yaml) -> Option<fn(&str)> {
-    let redirect = yaml.as_str().unwrap();
-    match redirect {
-        "stdout" => return Some(print_to_stdout),
+fn construct_redirect(redirect_definition: &yaml_rust::Yaml) -> Option<LogsRedirect> {
+    let redirect_type = match redirect_definition["section"].as_str() {
+        Some(x) => x,
+        None => {
+            println!("No section specified, skipping");
+            return None;
+        }
+    };
+    match redirect_type {
+        "console" => {
+          let new_redirect = LogsRedirect {
+            name: "console".to_string(),
+            sections: match redirect_definition["sections"].as_vec() {
+              Some(sections) => sections
+                .iter()
+                .map(|section_definition| {
+                  let section_name = section_definition.as_str().unwrap();
+                  let format = construct_format(section_definition, section_name);
+                  (section_name.to_string(), format)
+                })
+                .collect::<HashMap<String, Vec<String>>>(),
+              None => HashMap::new(),
+            },
+            precision: match redirect_definition["precision"].as_i64() {
+              Some(x) => x as usize,
+              None => DEFAULT_PRECISION,
+            },
+            handler: print_to_stdout,
+            options: HashMap::new(),
+          };
+          return Some(new_redirect);
+        }
         "file" => {
             println!("File redirect not implemented yet, skipping");
             return None;
@@ -72,7 +127,7 @@ impl SimulationLogger {
         match yaml["redirects"].as_vec() {
             Some(redirects) => {
                 for redirect in redirects.iter() {
-                    match contruct_redirects(redirect) {
+                    match construct_redirect(redirect) {
                         Some(valid_redirect) => valid_redirects.push(valid_redirect),
                         None => continue,
                     }

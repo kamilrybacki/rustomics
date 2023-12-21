@@ -13,20 +13,29 @@ system:
       position: [0.5, 0.0, 0.5]
     - name: Al
       position: [0.0, 0.5, 0.5]
-  periodicity: "xy"
+  periodicity: "xyz"
   units: atomic
   replicas: [2, 2, 2]
 logger:
   redirects:
-    - file
-    - stdout
-  sections:
-    - atoms
-    - thermo
-  thermodynamics:
-    - temperature
-    - potential_energy
-  format: "id x y z vx vy vz fx fy fz"
+    atoms_positions_file:
+      sections:
+        atoms:
+          format: "id x y z vx vy vz fx fy fz"
+      type: file
+      filename: output_raw.xyz
+      append: false
+    stdout:
+      type: console
+      sections:
+        thermodynamics:
+          format:
+            - step
+            - time
+            - temperature
+            - potential_energy
+            - kinetic_energy
+            - total_energy
   frequency: 2
   precision: 3
 dynamics:

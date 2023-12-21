@@ -41,12 +41,13 @@ impl SimulationRunnerEngine {
                     .neighbours
                     .update(
                       &self.simulation.system.atoms,
-                      self.simulation.system.simulation_box.cell.vectors
+                      &self.simulation.system.simulation_box
                     );
             }
             self.simulation.integrator.next_positions(
                 &mut self.simulation.system.atoms,
             );
+            self.simulation.system.wrap_atom_positions();
             self.simulation.potential_model.update(
                 &mut self.simulation.system.atoms,
                 &self.simulation.neighbours,
