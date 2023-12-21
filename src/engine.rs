@@ -39,7 +39,10 @@ impl SimulationRunnerEngine {
             if should_update_neighbours {
                 self.simulation
                     .neighbours
-                    .update(&self.simulation.system.atoms);
+                    .update(
+                      &self.simulation.system.atoms,
+                      self.simulation.system.simulation_box.cell.vectors
+                    );
             }
             self.simulation.integrator.next_positions(
                 &mut self.simulation.system.atoms,

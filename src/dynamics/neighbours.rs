@@ -50,7 +50,7 @@ impl NeighboursList {
             },
         }
     }
-    fn update_for_atom(&mut self, index: usize, atoms: &Vec<Atom>) -> () {
+    fn update_for_atom(&mut self, index: usize, atoms: &Vec<Atom>, box_vectors: [[f64 ; 3] ;3]) -> () {
         let new_neighbours = atoms
           .par_iter()
           .enumerate()
@@ -61,6 +61,7 @@ impl NeighboursList {
               neighbour.current.position[1] - atoms[index as usize].current.position[1],
               neighbour.current.position[2] - atoms[index as usize].current.position[2],
             ];
+            // Calculate projections on basis vectors and apply minimum image conventions
             let distance = euclidean_norm(&distance_vector);
             if distance < self.cutoff {
               return (j.try_into().unwrap(), distance_vector, distance);
@@ -70,12 +71,12 @@ impl NeighboursList {
         self.neighbours
             .insert(index.try_into().unwrap(), new_neighbours.collect());
     }
-    pub fn update(&mut self, atoms: &Vec<Atom>) -> () {
+    pub fn update(&mut self, atoms: &Vec<Atom>, box_vectors: [[f64 ; 3] ;3]) -> () {
         self.neighbours.clear();
         atoms
             .iter()
             .enumerate()
-            .for_each(|(index, _)| self.update_for_atom(index, atoms));
+            .for_each(|(index, _)| self.update_for_atom(index, atoms, box_vectors));
     }
     pub fn get_neighbours(&self, index: u64) -> Vec<NeighboursListEntry> {
         match self.neighbours.get(&(index as u64)) {
