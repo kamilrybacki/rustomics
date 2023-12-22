@@ -18,17 +18,19 @@ system:
   replicas: [2, 2, 2]
 logger:
   redirects:
-    atoms_positions_file:
+    - atoms_positions_file:
       sections:
-        atoms:
+        - name: atoms
           format: "id x y z vx vy vz fx fy fz"
       type: file
       filename: output_raw.xyz
       append: false
-    stdout:
+    - stdout:
       type: console
       sections:
-        thermodynamics:
+        - name: atoms
+          format: "id x y z vx vy vz fx fy fz"
+        - name: thermodynamics
           format:
             - step
             - time

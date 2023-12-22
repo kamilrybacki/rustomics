@@ -29,7 +29,6 @@ impl SimulationRunnerEngine {
     }
 
     pub fn run(&mut self) -> () {
-        self.logger.log_simulation_header(&self.simulation);
         if self.simulation.clock.current_step > 1 {
             self.simulation.clock.reset();
         }

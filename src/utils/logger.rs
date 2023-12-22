@@ -2,15 +2,11 @@ use std::collections::HashMap;
 use std::io::{self, Write};
 
 use rayon::prelude::*;
+use yaml_rust::Yaml;
 
 use crate::dynamics::neighbours::NeighboursList;
 use crate::simulation::Simulation;
 
-const DEFAULT_FORMATS_FOR_SECTIONS: HashMap<&str, &str> = HashMap::from([
-    ("thermo", "step temperature potential_energy kinetic_energy total_energy"),
-    ("neighbours", "id type x y z"),
-    ("atoms", "id type x y z vx vy vz fx fy fz mass charge potential_energy kinetic_energy total_energy"),
-]);
 const DEFAULT_PRECISION: usize = 3;
 
 pub struct LogsRedirect {
@@ -33,10 +29,16 @@ fn print_to_stdout(message: &str) {
 }
 
 fn construct_format(section_yaml: &yaml_rust::Yaml, section_type: &str) -> Vec<String> {
-    match section_yaml["format"] {
+    let default_formats: HashMap<&str, &str> = HashMap::from([
+        ("thermo", "step temperature potential_energy kinetic_energy total_energy"),
+        ("neighbours", "id type x y z"),
+        ("atoms", "id type x y z vx vy vz fx fy fz mass charge potential_energy kinetic_energy total_energy"),
+    ]);
+
+    match &section_yaml["format"] {
         yaml_rust::Yaml::BadValue => {
             println!("No format specified, using default");
-            DEFAULT_FORMATS_FOR_SECTIONS
+            default_formats
               .get(section_type)
               .unwrap()
               .split_whitespace()
@@ -58,7 +60,7 @@ fn construct_format(section_yaml: &yaml_rust::Yaml, section_type: &str) -> Vec<S
                 .collect::<Vec<String>>(),
             _ => {
                 println!("Unknown format {:?}, using default", section_yaml);
-                DEFAULT_FORMATS_FOR_SECTIONS
+                default_formats
                   .get(section_type)
                   .unwrap()
                   .split_whitespace()
@@ -70,7 +72,7 @@ fn construct_format(section_yaml: &yaml_rust::Yaml, section_type: &str) -> Vec<S
 }
 
 fn construct_redirect(redirect_definition: &yaml_rust::Yaml) -> Option<LogsRedirect> {
-    let redirect_type = match redirect_definition["section"].as_str() {
+    let redirect_type = match redirect_definition["type"].as_str() {
         Some(x) => x,
         None => {
             println!("No section specified, skipping");
@@ -85,7 +87,7 @@ fn construct_redirect(redirect_definition: &yaml_rust::Yaml) -> Option<LogsRedir
               Some(sections) => sections
                 .iter()
                 .map(|section_definition| {
-                  let section_name = section_definition.as_str().unwrap();
+                  let section_name = section_definition["name"].as_str().unwrap();
                   let format = construct_format(section_definition, section_name);
                   (section_name.to_string(), format)
                 })
@@ -123,49 +125,37 @@ impl SimulationLogger {
             _ => panic!("Frequency must be an integer"),
         };
 
-        let mut valid_redirects: Vec<fn(&str)> = Vec::new();
-        match yaml["redirects"].as_vec() {
-            Some(redirects) => {
-                for redirect in redirects.iter() {
-                    match construct_redirect(redirect) {
-                        Some(valid_redirect) => valid_redirects.push(valid_redirect),
-                        None => continue,
-                    }
-                }
-            }
-            None => println!("No redirects found!"),
-        }
-
-        match valid_redirects.len() {
-            0 => {
-                println!("No redirects found, using default (STDOUT)");
-                valid_redirects.push(print_to_stdout)
-            }
+        let mut valid_redirects: Vec<LogsRedirect> = Vec::new();
+        match &yaml["redirects"] {
+            yaml_rust::Yaml::Array(redirects_array) => {
+              for redirect in redirects_array.iter() {
+                  match construct_redirect(redirect) {
+                      Some(valid_redirect) => valid_redirects.push(valid_redirect),
+                      None => continue,
+                  }
+              }
+            },
             _ => {
-                println!("Redirects found: {}", valid_redirects.len());
+                println!("Redirects must be an array, using default (STDOUT)");
+                valid_redirects.push(LogsRedirect {
+                  name: "console".to_string(),
+                  sections: HashMap::from([(
+                      "default_thermo".to_string(),
+                      vec!["step", "temperature", "potential_energy", "kinetic_energy", "total_energy"]
+                          .iter()
+                          .map(|x| x.to_string())
+                          .collect::<Vec<String>>(),
+                  )]),
+                  precision: 3,
+                  handler: print_to_stdout,
+                  options: HashMap::new(),
+                })
             }
         }
-
-        let information_sections = match yaml["sections"].as_vec() {
-            Some(sections) => sections
-                .iter()
-                .map(|x| x.as_str().unwrap().to_string())
-                .collect::<Vec<String>>(),
-            None => vec![],
-        };
 
         SimulationLogger {
             frequency,
-            format: construct_format(&yaml["format"]),
             redirects: valid_redirects,
-            sections: match information_sections.len() {
-                0 => vec!["thermo".to_string()],
-                _ => information_sections,
-            },
-            thermo: match yaml["thermo"].as_str() {
-                Some(x) => x.to_string(),
-                None => DEFAULT_THERMODYNAMICS_TO_LOG.to_string(),
-            },
             precision: match yaml["precision"].as_i64() {
                 Some(x) => x as usize,
                 None => 3,
@@ -176,34 +166,34 @@ impl SimulationLogger {
     pub fn default() -> SimulationLogger {
         SimulationLogger {
             frequency: 1,                              // Print every step
-            format: construct_format(
-              &yaml_rust::Yaml::String(DEFAULT_LOGGER_FORMAT.to_string())
-            ),
-            redirects: vec![print_to_stdout],          // Print to STDOUT
-            sections: vec!["thermo".to_string()],      // Print only thermo
-            thermo: DEFAULT_THERMODYNAMICS_TO_LOG.to_string(),
+            redirects: vec![LogsRedirect {
+              name: "console".to_string(),
+              sections: HashMap::from([(
+                  "default_thermo".to_string(),
+                  vec!["step", "temperature", "potential_energy", "kinetic_energy", "total_energy"]
+                      .iter()
+                      .map(|x| x.to_string())
+                      .collect::<Vec<String>>(),
+              )]),
+              precision: 3,
+              handler: print_to_stdout,
+              options: HashMap::new(),
+            }], // print to STDOUT
             precision: 3,
-        }
-    }
-
-    pub fn log_simulation_header(&self, simulation: &Simulation) -> () {
-        let header: String = "# Starting simulation".to_string();
-        for redirect in self.redirects.iter() {
-            redirect(&header);
         }
     }
 
     pub fn log_simulation_state(&self, simulation: &Simulation) -> () {
         if simulation.clock.current_step % self.frequency == 0 {
-            for redirect in self.redirects.iter() {
-              println!(
-                  "\nLogging step: {}\n\n{}\n",
-                  simulation.clock.current_step,
-                  self.format.join(" ")
-              );
-              let log_entry = self.construct_simulation_state_log(simulation);
-              redirect(&log_entry.join("\n"));
-            }
+          let collected_logs = self.redirects
+            .iter()
+            .map(|redirect| {
+              self.construct_current_state_log(simulation, &redirect.sections)
+            });
+          todo!("Logs only last atom!");
+          for log in collected_logs {
+            println!("{:?}", log);
+          };
         }
     }
 
@@ -217,36 +207,68 @@ impl SimulationLogger {
         }
     }
 
-    fn construct_simulation_state_log(&self, simulation: &Simulation) -> Vec<String> {
-      let mut messages = simulation.system.atoms
+    fn construct_current_state_log(&self, simulation: &Simulation, sections: &HashMap<String, Vec<String>>) -> HashMap<String, Vec<(String, String)>> {
+      let fields: Vec<String> = sections
+        .iter()
+        .map(|(_, section_fields)| section_fields.clone())
+        .flatten()
+        .collect::<Vec<String>>();
+      let mut collected_values = simulation
+        .system.atoms
         .par_iter()
         .map(|atom| {
-          let mut atom_message = String::new();
-          for format in self.format.iter() {
-            match format.as_str() {
-              "id" => atom_message.push_str(&format!("{:} ", atom.id + 1)),
-              "x" => atom_message.push_str(&format!("{:.*} ", self.precision, atom.current.position[0])),
-              "y" => atom_message.push_str(&format!("{:.*} ", self.precision, atom.current.position[1])),
-              "z" => atom_message.push_str(&format!("{:.*} ", self.precision, atom.current.position[2])),
-              "type" => atom_message.push_str(&format!("{:} ", atom.name)),
-              "vx" => atom_message.push_str(&format!("{:.*} ", self.precision, atom.current.velocity[0])),
-              "vy" => atom_message.push_str(&format!("{:.*} ", self.precision, atom.current.velocity[1])),
-              "vz" => atom_message.push_str(&format!("{:.*} ", self.precision, atom.current.velocity[2])),
-              "fx" => atom_message.push_str(&format!("{:.*} ", self.precision, atom.current.force[0])),
-              "fy" => atom_message.push_str(&format!("{:.*} ", self.precision, atom.current.force[1])),
-              "fz" => atom_message.push_str(&format!("{:.*} ", self.precision, atom.current.force[2])),
-              "mass" => atom_message.push_str(&format!("{:.*} ", self.precision, atom.mass)),
-              "charge" => atom_message.push_str(&format!("{:.*} ", self.precision, atom.charge)),
-              "potential_energy" => atom_message.push_str(&format!("{:.*} ", self.precision, atom.current.potential_energy)),
-              // "kinetic_energy" => atom_message.push_str(&format!("{:.*} ", self.precision, atom.current.kinetic_energy())),
-              // "total_energy" => atom_message.push_str(&format!("{:.*} ", self.precision, atom.current.total_energy())),
-              _ => continue,
+          let mut found_values = HashMap::new();
+          for field in &fields {
+            let field_value: Option<String> = match field.as_str() {
+              "id" => Some(format!("{:} ", atom.id + 1)),
+              "x" => Some(format!("{:.*} ", self.precision, atom.current.position[0])),
+              "y" => Some(format!("{:.*} ", self.precision, atom.current.position[1])),
+              "z" => Some(format!("{:.*} ", self.precision, atom.current.position[2])),
+              "type" => Some(format!("{:} ", atom.name)),
+              "vx" => Some(format!("{:.*} ", self.precision, atom.current.velocity[0])),
+              "vy" => Some(format!("{:.*} ", self.precision, atom.current.velocity[1])),
+              "vz" => Some(format!("{:.*} ", self.precision, atom.current.velocity[2])),
+              "fx" => Some(format!("{:.*} ", self.precision, atom.current.force[0])),
+              "fy" => Some(format!("{:.*} ", self.precision, atom.current.force[1])),
+              "fz" => Some(format!("{:.*} ", self.precision, atom.current.force[2])),
+              "mass" => Some(format!("{:.*} ", self.precision, atom.mass)),
+              "charge" => Some(format!("{:.*} ", self.precision, atom.charge)),
+              "potential_energy" => Some(format!("{:.*} ", self.precision, simulation.energetics.potential_energy)),
+              "kinetic_energy" => Some(format!("{:.*} ", self.precision, simulation.energetics.kinetic_energy)),
+              "total_energy" => Some(format!("{:.*} ", self.precision, simulation.energetics.total_energy)),
+              "temperature" => Some(format!("{:.*} ", self.precision, simulation.energetics.temperature)),
+              _ => None
+            };
+            match field_value {
+              Some(value) => {
+                found_values.insert(field.to_string(), value);
+              },
+              None => continue,
             }
           }
-          atom_message
+          found_values
         })
-        .collect::<Vec<String>>();
-      messages.push("\n\n".to_string());
-      messages
+        .flatten()
+        .collect::<HashMap<String, String>>();
+      if fields.contains(&"step".to_string()) {
+        collected_values.insert("step".to_string(), format!("{:} ", simulation.clock.current_step));
+      }
+      if fields.contains(&"time".to_string()) {
+        collected_values.insert("time".to_string(), format!("{:.*} ", self.precision, simulation.clock.current_time));
+      }
+      let sections_values = sections
+        .iter()
+        .map(|(section_name, section_fields)| {
+          let section_values: Vec<(String, String)> = section_fields
+            .iter()
+            .map(|field| {
+              let field_value = collected_values.get(field).unwrap();
+              (field.to_string(), field_value.to_string())
+            })
+            .collect::<Vec<(String, String)>>();
+          (section_name.to_string(), section_values)
+        })
+        .collect::<HashMap<String, Vec<(String, String)>>>();
+      sections_values
     }
 }

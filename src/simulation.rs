@@ -4,12 +4,13 @@ use core::fmt;
 
 use yaml_rust::Yaml;
 
-use crate::statics::models::PotentialModel;
-use crate::system::SystemDefinition;
 
 use crate::dynamics::integrators::verlet::VerletIntegrator;
 use crate::dynamics::neighbours::NeighboursList;
 use crate::dynamics::DynamicsIntegrator;
+use crate::statics::models::PotentialModel;
+use crate::statics::energetics::SystemEnergetics;
+use crate::system::SystemDefinition;
 
 pub struct InternalClock {
     // Definition of the simulation length and time step
@@ -49,6 +50,7 @@ pub struct Simulation {
     pub clock: InternalClock,           // Internal clock for the simulation runtime
     pub potential_model: PotentialModel,
     pub neighbours: NeighboursList,
+    pub energetics: SystemEnergetics
 }
 
 impl Simulation {
@@ -75,6 +77,7 @@ impl Simulation {
                 calculated_total_time,
             ),
             neighbours: NeighboursList::from(&yaml["neighbours"]),
+            energetics: SystemEnergetics::new(),
         }
     }
 }
