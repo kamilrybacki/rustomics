@@ -185,12 +185,13 @@ impl SimulationLogger {
 
     pub fn log_simulation_state(&self, simulation: &Simulation) -> () {
         if simulation.clock.current_step % self.frequency == 0 {
-          let collected_logs = self.redirects
+          let collected_logs: Vec<HashMap<String, Vec<(String, String)>>> = self.redirects
             .iter()
             .map(|redirect| {
               self.construct_current_state_log(simulation, &redirect.sections)
-            });
-          todo!("Logs only last atom!");
+            })
+            .collect();
+          // todo!("Logs only last atom!");
           for log in collected_logs {
             println!("{:?}", log);
           };
@@ -208,67 +209,59 @@ impl SimulationLogger {
     }
 
     fn construct_current_state_log(&self, simulation: &Simulation, sections: &HashMap<String, Vec<String>>) -> HashMap<String, Vec<(String, String)>> {
-      let fields: Vec<String> = sections
+      // for field in &fields {
+      //   match field { 
+      //     "potential_energy" => Some(format!("{:.*} ", self.precision, simulation.energetics.potential_energy)),
+      //     "kinetic_energy" => Some(format!("{:.*} ", self.precision, simulation.energetics.kinetic_energy)),
+      //     "total_energy" => Some(format!("{:.*} ", self.precision, simulation.energetics.total_energy)),
+      //     "temperature" => Some(format!("{:.*} ", self.precision, simulation.energetics.temperature))
+      //   };
+      // }
+      sections
         .iter()
-        .map(|(_, section_fields)| section_fields.clone())
-        .flatten()
-        .collect::<Vec<String>>();
-      let mut collected_values = simulation
-        .system.atoms
-        .par_iter()
-        .map(|atom| {
-          let mut found_values = HashMap::new();
-          for field in &fields {
-            let field_value: Option<String> = match field.as_str() {
-              "id" => Some(format!("{:} ", atom.id + 1)),
-              "x" => Some(format!("{:.*} ", self.precision, atom.current.position[0])),
-              "y" => Some(format!("{:.*} ", self.precision, atom.current.position[1])),
-              "z" => Some(format!("{:.*} ", self.precision, atom.current.position[2])),
-              "type" => Some(format!("{:} ", atom.name)),
-              "vx" => Some(format!("{:.*} ", self.precision, atom.current.velocity[0])),
-              "vy" => Some(format!("{:.*} ", self.precision, atom.current.velocity[1])),
-              "vz" => Some(format!("{:.*} ", self.precision, atom.current.velocity[2])),
-              "fx" => Some(format!("{:.*} ", self.precision, atom.current.force[0])),
-              "fy" => Some(format!("{:.*} ", self.precision, atom.current.force[1])),
-              "fz" => Some(format!("{:.*} ", self.precision, atom.current.force[2])),
-              "mass" => Some(format!("{:.*} ", self.precision, atom.mass)),
-              "charge" => Some(format!("{:.*} ", self.precision, atom.charge)),
-              "potential_energy" => Some(format!("{:.*} ", self.precision, simulation.energetics.potential_energy)),
-              "kinetic_energy" => Some(format!("{:.*} ", self.precision, simulation.energetics.kinetic_energy)),
-              "total_energy" => Some(format!("{:.*} ", self.precision, simulation.energetics.total_energy)),
-              "temperature" => Some(format!("{:.*} ", self.precision, simulation.energetics.temperature)),
-              _ => None
-            };
-            match field_value {
-              Some(value) => {
-                found_values.insert(field.to_string(), value);
-              },
-              None => continue,
-            }
+        .map(|section| {
+          let fields = section.1;
+          match section.0 {
+            "atoms" => {
+              simulation
+                .system.atoms
+                .par_iter()
+                .map(|atom| {
+                  let mut found_values = HashMap::new();
+                  for field in fields {
+                    let field_value: Option<String> = match field.as_str() {
+                      "id" => Some(format!("{:} ", atom.id + 1)),
+                      "x" => Some(format!("{:.*} ", self.precision, atom.current.position[0])),
+                      "y" => Some(format!("{:.*} ", self.precision, atom.current.position[1])),
+                      "z" => Some(format!("{:.*} ", self.precision, atom.current.position[2])),
+                      "type" => Some(format!("{:} ", atom.name)),
+                      "vx" => Some(format!("{:.*} ", self.precision, atom.current.velocity[0])),
+                      "vy" => Some(format!("{:.*} ", self.precision, atom.current.velocity[1])),
+                      "vz" => Some(format!("{:.*} ", self.precision, atom.current.velocity[2])),
+                      "fx" => Some(format!("{:.*} ", self.precision, atom.current.force[0])),
+                      "fy" => Some(format!("{:.*} ", self.precision, atom.current.force[1])),
+                      "fz" => Some(format!("{:.*} ", self.precision, atom.current.force[2])),
+                      "mass" => Some(format!("{:.*} ", self.precision, atom.mass)),
+                      "charge" => Some(format!("{:.*} ", self.precision, atom.charge)),
+                      _ => None
+                    };
+                    match field_value {
+                      Some(value) => {
+                        found_values.insert(field.to_string(), value);
+                      },
+                      None => continue,
+                    };
+                    if fields.contains(&"step".to_string()) {
+                      found_values.insert("step".to_string(), format!("{:} ", simulation.clock.current_step));
+                    };
+                    if fields.contains(&"time".to_string()) {
+                      found_values.insert("time".to_string(), format!("{:.*} ", self.precision, simulation.clock.current_time));
+                    };
+                    found_values
+                }
+              })
+            },
           }
-          found_values
         })
-        .flatten()
-        .collect::<HashMap<String, String>>();
-      if fields.contains(&"step".to_string()) {
-        collected_values.insert("step".to_string(), format!("{:} ", simulation.clock.current_step));
-      }
-      if fields.contains(&"time".to_string()) {
-        collected_values.insert("time".to_string(), format!("{:.*} ", self.precision, simulation.clock.current_time));
-      }
-      let sections_values = sections
-        .iter()
-        .map(|(section_name, section_fields)| {
-          let section_values: Vec<(String, String)> = section_fields
-            .iter()
-            .map(|field| {
-              let field_value = collected_values.get(field).unwrap();
-              (field.to_string(), field_value.to_string())
-            })
-            .collect::<Vec<(String, String)>>();
-          (section_name.to_string(), section_values)
-        })
-        .collect::<HashMap<String, Vec<(String, String)>>>();
-      sections_values
     }
 }

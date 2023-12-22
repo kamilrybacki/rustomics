@@ -28,9 +28,9 @@ logger:
     - stdout:
       type: console
       sections:
-        - name: atoms
+        - type: atoms
           format: "id x y z vx vy vz fx fy fz"
-        - name: thermodynamics
+        - type: thermodynamics
           format:
             - step
             - time
