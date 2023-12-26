@@ -202,10 +202,10 @@ impl SimulationLogger {
                 .iter()
                 .map(|redirect| self.construct_current_state_log(simulation, &redirect.sections))
                 .collect::<Vec<HashMap<String, Vec<Vec<(String, String)>>>>>();
-            // todo!("Logs only last atom!");
             for log in collected_logs {
                 println!("{:?}", log);
             }
+            todo!("Implement serialization to handlers")
         }
     }
 
