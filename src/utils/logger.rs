@@ -235,13 +235,13 @@ impl SimulationLogger {
                         if section_fields.contains(&"step".to_string()) {
                             found_values.push((
                                 "step".to_string(),
-                                format!("{:} ", simulation.clock.current_step),
+                                format!("{:}", simulation.clock.current_step),
                             ));
                         };
                         if section_fields.contains(&"time".to_string()) {
                             found_values.push((
                                 "time".to_string(),
-                                format!("{:.*} ", self.precision, simulation.clock.current_time),
+                                format!("{:.*}", self.precision, simulation.clock.current_time),
                             ));
                         };
                         for field in section_fields {
@@ -249,43 +249,43 @@ impl SimulationLogger {
                                 continue;
                             };
                             let field_value: Option<String> = match field.as_str() {
-                                "id" => Some(format!("{:} ", atom.id + 1)),
+                                "id" => Some(format!("{:}", atom.id + 1)),
                                 "x" => Some(format!(
-                                    "{:.*} ",
+                                    "{:.*}",
                                     self.precision, atom.current.position[0]
                                 )),
                                 "y" => Some(format!(
-                                    "{:.*} ",
+                                    "{:.*}",
                                     self.precision, atom.current.position[1]
                                 )),
                                 "z" => Some(format!(
-                                    "{:.*} ",
+                                    "{:.*}",
                                     self.precision, atom.current.position[2]
                                 )),
-                                "type" => Some(format!("{:} ", atom.name)),
+                                "type" => Some(format!("{:}", atom.name)),
                                 "vx" => Some(format!(
-                                    "{:.*} ",
+                                    "{:.*}",
                                     self.precision, atom.current.velocity[0]
                                 )),
                                 "vy" => Some(format!(
-                                    "{:.*} ",
+                                    "{:.*}",
                                     self.precision, atom.current.velocity[1]
                                 )),
                                 "vz" => Some(format!(
-                                    "{:.*} ",
+                                    "{:.*}",
                                     self.precision, atom.current.velocity[2]
                                 )),
                                 "fx" => {
-                                    Some(format!("{:.*} ", self.precision, atom.current.force[0]))
+                                    Some(format!("{:.*}", self.precision, atom.current.force[0]))
                                 }
                                 "fy" => {
-                                    Some(format!("{:.*} ", self.precision, atom.current.force[1]))
+                                    Some(format!("{:.*}", self.precision, atom.current.force[1]))
                                 }
                                 "fz" => {
-                                    Some(format!("{:.*} ", self.precision, atom.current.force[2]))
+                                    Some(format!("{:.*}", self.precision, atom.current.force[2]))
                                 }
-                                "mass" => Some(format!("{:.*} ", self.precision, atom.mass)),
-                                "charge" => Some(format!("{:.*} ", self.precision, atom.charge)),
+                                "mass" => Some(format!("{:.*}", self.precision, atom.mass)),
+                                "charge" => Some(format!("{:.*}", self.precision, atom.charge)),
                                 _ => None,
                             };
                             match field_value {
@@ -302,10 +302,10 @@ impl SimulationLogger {
                   let mut found_values: Vec<(String, String)> = Vec::new();
                   for field in section_fields {
                     let found_value = match field.as_str() {
-                      "potential_energy" => Some(format!("{:.*} ", self.precision, simulation.energetics.potential_energy)),
-                      "kinetic_energy" => Some(format!("{:.*} ", self.precision, simulation.energetics.kinetic_energy)),
-                      "total_energy" => Some(format!("{:.*} ", self.precision, simulation.energetics.total_energy)),
-                      "temperature" => Some(format!("{:.*} ", self.precision, simulation.energetics.temperature)),
+                      "potential_energy" => Some(format!("{:.*}", self.precision, simulation.energetics.potential_energy)),
+                      "kinetic_energy" => Some(format!("{:.*}", self.precision, simulation.energetics.kinetic_energy)),
+                      "total_energy" => Some(format!("{:.*}", self.precision, simulation.energetics.total_energy)),
+                      "temperature" => Some(format!("{:.*}", self.precision, simulation.energetics.temperature)),
                       _ => None
                     };
                     match found_value {
