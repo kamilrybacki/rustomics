@@ -24,14 +24,14 @@ pub struct PreviousState {
 
 impl CurrentState {
     pub fn cache(&self) -> PreviousState {
-      PreviousState {
-        position: self.position,
-        velocity: self.velocity,
-        force: self.force,
-        potential_energy: self.potential_energy,
-        kinetic_energy: self.kinetic_energy,
-        total_energy: self.total_energy,
-      }
+        PreviousState {
+            position: self.position,
+            velocity: self.velocity,
+            force: self.force,
+            potential_energy: self.potential_energy,
+            kinetic_energy: self.kinetic_energy,
+            total_energy: self.total_energy,
+        }
     }
 }
 
@@ -134,7 +134,11 @@ impl std::fmt::Display for Atom {
         write!(
             f,
             "{} [{:.2}u] @ ({:.3}, {:.3}, {:.3})",
-            self.name, self.mass, self.current.position[0], self.current.position[1], self.current.position[2]
+            self.name,
+            self.mass,
+            self.current.position[0],
+            self.current.position[1],
+            self.current.position[2]
         )
     }
 }

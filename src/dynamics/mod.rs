@@ -8,18 +8,12 @@ pub enum DynamicsIntegrator {
 }
 
 impl DynamicsIntegrator {
-    pub fn next_positions(
-        &mut self,
-        atoms: &mut Vec<Atom>,
-    ) -> () {
+    pub fn next_positions(&mut self, atoms: &mut Vec<Atom>) -> () {
         match self {
             DynamicsIntegrator::Verlet(x) => x.next_positions(atoms),
         }
     }
-    pub fn next_velocities(
-        &mut self,
-        atoms: &mut Vec<Atom>,
-    ) -> () {
+    pub fn next_velocities(&mut self, atoms: &mut Vec<Atom>) -> () {
         match self {
             DynamicsIntegrator::Verlet(x) => x.next_velocities(atoms),
         }
@@ -38,16 +32,10 @@ impl std::fmt::Display for DynamicsIntegrator {
 
 #[allow(unused_variables)]
 trait NextStepCalculation {
-    fn next_positions(
-        &mut self,
-        atoms: &mut Vec<Atom>,
-    ) -> () {
+    fn next_positions(&mut self, atoms: &mut Vec<Atom>) -> () {
         panic!("Not implemented");
     }
-    fn next_velocities(
-        &mut self,
-        atoms: &mut Vec<Atom>,
-    ) -> () {
+    fn next_velocities(&mut self, atoms: &mut Vec<Atom>) -> () {
         panic!("Not implemented");
     }
 }

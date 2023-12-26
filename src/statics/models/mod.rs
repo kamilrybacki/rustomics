@@ -22,10 +22,7 @@ impl PotentialModel {
         }
     }
     pub fn update(&self, atoms: &mut Vec<Atom>, neighbours_list: &NeighboursList) -> () {
-        atoms
-          .par_iter_mut()
-          .enumerate()
-          .for_each(|(i, atom)| {
+        atoms.par_iter_mut().enumerate().for_each(|(i, atom)| {
             atom.previous = atom.current.cache();
             atom.current.force = [0.0; 3];
             atom.current.potential_energy = 0.0;
@@ -44,9 +41,12 @@ impl PotentialModel {
                         }
                     };
                     atom.current.force = [
-                        atom.current.force[0] + force * neighbour.distance_vector[0] / neighbour.distance,
-                        atom.current.force[1] + force * neighbour.distance_vector[1] / neighbour.distance,
-                        atom.current.force[2] + force * neighbour.distance_vector[2] / neighbour.distance,
+                        atom.current.force[0]
+                            + force * neighbour.distance_vector[0] / neighbour.distance,
+                        atom.current.force[1]
+                            + force * neighbour.distance_vector[1] / neighbour.distance,
+                        atom.current.force[2]
+                            + force * neighbour.distance_vector[2] / neighbour.distance,
                     ];
                 })
         })

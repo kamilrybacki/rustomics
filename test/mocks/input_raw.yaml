@@ -45,7 +45,7 @@ dynamics:
     type: verlet
     flavor: velocity
   timestep: 0.001
-  steps: 2
+  steps: 10
 thermodynamics:
   ensemble:
     type: nve

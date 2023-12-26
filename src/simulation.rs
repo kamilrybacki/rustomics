@@ -4,12 +4,11 @@ use core::fmt;
 
 use yaml_rust::Yaml;
 
-
 use crate::dynamics::integrators::verlet::VerletIntegrator;
 use crate::dynamics::neighbours::NeighboursList;
 use crate::dynamics::DynamicsIntegrator;
-use crate::statics::models::PotentialModel;
 use crate::statics::energetics::SystemEnergetics;
+use crate::statics::models::PotentialModel;
 use crate::system::SystemDefinition;
 
 pub struct InternalClock {
@@ -50,7 +49,7 @@ pub struct Simulation {
     pub clock: InternalClock,           // Internal clock for the simulation runtime
     pub potential_model: PotentialModel,
     pub neighbours: NeighboursList,
-    pub energetics: SystemEnergetics
+    pub energetics: SystemEnergetics,
 }
 
 impl Simulation {
@@ -72,10 +71,7 @@ impl Simulation {
                 "verlet" => DynamicsIntegrator::Verlet(VerletIntegrator::from(&dynamics_setup)),
                 _ => panic!("Unknown integrator"),
             },
-            clock: InternalClock::new(
-                timestep,
-                calculated_total_time,
-            ),
+            clock: InternalClock::new(timestep, calculated_total_time),
             neighbours: NeighboursList::from(&yaml["neighbours"]),
             energetics: SystemEnergetics::new(),
         }

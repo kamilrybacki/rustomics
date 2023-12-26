@@ -53,55 +53,57 @@ impl NeighboursList {
     }
     fn update_for_atom(&mut self, index: usize, atoms: &Vec<Atom>, simbox: &SimulationBox) -> () {
         let new_neighbours = atoms
-          .par_iter()
-          .enumerate()
-          .filter(|(j, _)| *j != index)
-          .map(|(j, neighbour)| {
-            let mut distance_vector = [
-              neighbour.current.position[0] - atoms[index as usize].current.position[0],
-              neighbour.current.position[1] - atoms[index as usize].current.position[1],
-              neighbour.current.position[2] - atoms[index as usize].current.position[2],
-            ];
-            // Calculate projections on basis vectors and apply minimum image conventions
-            simbox.cell.vectors
-              .iter()
-              .enumerate()
-              .for_each(|(i, &basis_vector)| {
-                if !simbox.periodicity[i] {
-                  return;
-                }
-                let basis_vector_norm = euclidean_norm(&basis_vector);
-                let mut projection_scaling_factor_dot_product = 0.0;
-                for dimension in 0..3 {
-                  projection_scaling_factor_dot_product += distance_vector[dimension] *basis_vector[dimension];
-                }
-                let projection_scaling_factor = projection_scaling_factor_dot_product / basis_vector_norm.powi(2);
-                let projection = [
-                  basis_vector[0] * projection_scaling_factor,
-                  basis_vector[1] * projection_scaling_factor,
-                  basis_vector[2] * projection_scaling_factor,
+            .par_iter()
+            .enumerate()
+            .filter(|(j, _)| *j != index)
+            .map(|(j, neighbour)| {
+                let mut distance_vector = [
+                    neighbour.current.position[0] - atoms[index as usize].current.position[0],
+                    neighbour.current.position[1] - atoms[index as usize].current.position[1],
+                    neighbour.current.position[2] - atoms[index as usize].current.position[2],
                 ];
-                let projection_norm = euclidean_norm(&projection);
-                let norms_ratio = projection_norm / basis_vector_norm;
-                if norms_ratio > 0.5 {
-                  distance_vector[0] -= basis_vector[0];
-                  distance_vector[1] -= basis_vector[1];
-                  distance_vector[2] -= basis_vector[2];
-                } else if norms_ratio <= -0.5 {
-                  distance_vector[0] += basis_vector[0];
-                  distance_vector[1] += basis_vector[1];
-                  distance_vector[2] += basis_vector[2];
+                // Calculate projections on basis vectors and apply minimum image conventions
+                simbox
+                    .cell
+                    .vectors
+                    .iter()
+                    .enumerate()
+                    .for_each(|(i, &basis_vector)| {
+                        if !simbox.periodicity[i] {
+                            return;
+                        }
+                        let basis_vector_norm = euclidean_norm(&basis_vector);
+                        let mut projection_scaling_factor_dot_product = 0.0;
+                        for dimension in 0..3 {
+                            projection_scaling_factor_dot_product +=
+                                distance_vector[dimension] * basis_vector[dimension];
+                        }
+                        let projection_scaling_factor =
+                            projection_scaling_factor_dot_product / basis_vector_norm.powi(2);
+                        let projection = [
+                            basis_vector[0] * projection_scaling_factor,
+                            basis_vector[1] * projection_scaling_factor,
+                            basis_vector[2] * projection_scaling_factor,
+                        ];
+                        let projection_norm = euclidean_norm(&projection);
+                        let norms_ratio = projection_norm / basis_vector_norm;
+                        if norms_ratio > 0.5 {
+                            distance_vector[0] -= basis_vector[0];
+                            distance_vector[1] -= basis_vector[1];
+                            distance_vector[2] -= basis_vector[2];
+                        } else if norms_ratio <= -0.5 {
+                            distance_vector[0] += basis_vector[0];
+                            distance_vector[1] += basis_vector[1];
+                            distance_vector[2] += basis_vector[2];
+                        }
+                    });
+                let distance = euclidean_norm(&distance_vector);
+                if distance < self.cutoff {
+                    return (j.try_into().unwrap(), distance_vector, distance);
                 }
-              });
-            let distance = euclidean_norm(&distance_vector);
-            if distance < self.cutoff {
-              return (j.try_into().unwrap(), distance_vector, distance);
-            }
-            return (0, [0.0, 0.0, 0.0], 0.0)
-          })
-          .filter(|(j, d, _)| {
-            *j != 0 && *d != [0.0, 0.0, 0.0]
-          });
+                return (0, [0.0, 0.0, 0.0], 0.0);
+            })
+            .filter(|(j, d, _)| *j != 0 && *d != [0.0, 0.0, 0.0]);
         self.neighbours
             .insert(index.try_into().unwrap(), new_neighbours.collect());
     }

@@ -2,8 +2,8 @@ pub mod base;
 pub mod r#box;
 pub mod thermodynamics;
 
-use yaml_rust::Yaml;
 use rayon::prelude::*;
+use yaml_rust::Yaml;
 
 use crate::data::load::load_atoms;
 use crate::data::load::to_vec_f64;
@@ -11,8 +11,8 @@ use crate::data::metrics::UnitSystem;
 use crate::system::base::atom::Atom;
 use crate::system::r#box::SimulationBox;
 
-use crate::system::base::lattice::scale_cell_basis;
 use crate::system::base::lattice::generate_lattice;
+use crate::system::base::lattice::scale_cell_basis;
 
 pub struct SystemDefinition {
     pub simulation_box: SimulationBox, // Box origin and vectors
@@ -72,23 +72,30 @@ impl SystemDefinition {
             _ => panic!("Unknown replicas"),
         };
         SystemDefinition {
-            simulation_box: SimulationBox::new(box_origin, box_vectors, box_periodicity, unit_cell_replications),
+            simulation_box: SimulationBox::new(
+                box_origin,
+                box_vectors,
+                box_periodicity,
+                unit_cell_replications,
+            ),
             atoms: load_atoms(&config["atoms"]),
             units: UnitSystem::new(&config["units"]),
         }
     }
     pub fn wrap_atom_positions(&mut self) -> () {
-        self.atoms
-            .par_iter_mut()
-            .for_each(|atom| {
-                for dimension in 0..3 {
-                    if atom.current.position[dimension] < 0.0 {
-                        atom.current.position[dimension] += self.simulation_box.cell.vectors[dimension][dimension];
-                    } else if atom.current.position[dimension] > self.simulation_box.cell.vectors[dimension][dimension] {
-                        atom.current.position[dimension] -= self.simulation_box.cell.vectors[dimension][dimension];
-                    }
+        self.atoms.par_iter_mut().for_each(|atom| {
+            for dimension in 0..3 {
+                if atom.current.position[dimension] < 0.0 {
+                    atom.current.position[dimension] +=
+                        self.simulation_box.cell.vectors[dimension][dimension];
+                } else if atom.current.position[dimension]
+                    > self.simulation_box.cell.vectors[dimension][dimension]
+                {
+                    atom.current.position[dimension] -=
+                        self.simulation_box.cell.vectors[dimension][dimension];
                 }
-            });
+            }
+        });
     }
 }
 

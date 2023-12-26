@@ -30,41 +30,41 @@ impl std::fmt::Display for VerletIntegrator {
 }
 
 impl NextStepCalculation for VerletIntegrator {
-    fn next_positions(
-        &mut self,
-        atoms: &mut Vec<Atom>,
-    ) -> () {
-      atoms
-        .par_iter_mut()
-        .for_each(|atom| {
-          for dimension in 0..3 {
-            atom.current.position[dimension] = match self.flavor.as_str() {
-              "velocity" => atom.current.position[dimension] + atom.current.velocity[dimension] * self.timestep + 0.5 * atom.current.force[dimension] / atom.mass * self.timestep.powi(2),
-              _ => {
-                println!("Unknown flavor");
-                atom.current.position[dimension]
-              },
-            };
-          }
+    fn next_positions(&mut self, atoms: &mut Vec<Atom>) -> () {
+        atoms.par_iter_mut().for_each(|atom| {
+            for dimension in 0..3 {
+                atom.current.position[dimension] = match self.flavor.as_str() {
+                    "velocity" => {
+                        atom.current.position[dimension]
+                            + atom.current.velocity[dimension] * self.timestep
+                            + 0.5 * atom.current.force[dimension] / atom.mass
+                                * self.timestep.powi(2)
+                    }
+                    _ => {
+                        println!("Unknown flavor");
+                        atom.current.position[dimension]
+                    }
+                };
+            }
         });
     }
-    fn next_velocities(
-        &mut self,
-        atoms: &mut Vec<Atom>,
-    ) -> () {
-      atoms
-        .par_iter_mut()
-        .for_each(|atom|{
-          for dimension in 0..3 {
-            atom.current.velocity[dimension] = match self.flavor.as_str() {
-              "velocity" => atom.current.velocity[dimension] + ( ( atom.current.force[dimension] + atom.previous.force[dimension]) / 2.0 * atom.mass ) * self.timestep,
-              _ => {
-                println!("Unknown flavor");
-                atom.current.velocity[dimension]
-              }
-            };
-          }
+    fn next_velocities(&mut self, atoms: &mut Vec<Atom>) -> () {
+        atoms.par_iter_mut().for_each(|atom| {
+            for dimension in 0..3 {
+                atom.current.velocity[dimension] = match self.flavor.as_str() {
+                    "velocity" => {
+                        atom.current.velocity[dimension]
+                            + ((atom.current.force[dimension] + atom.previous.force[dimension])
+                                / 2.0
+                                * atom.mass)
+                                * self.timestep
+                    }
+                    _ => {
+                        println!("Unknown flavor");
+                        atom.current.velocity[dimension]
+                    }
+                };
+            }
         });
     }
 }
-
