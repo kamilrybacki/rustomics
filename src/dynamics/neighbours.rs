@@ -64,37 +64,36 @@ impl NeighboursList {
                 ];
                 // Calculate projections on basis vectors and apply minimum image conventions
                 simbox
-                    .cell
                     .vectors
                     .iter()
                     .enumerate()
-                    .for_each(|(i, &basis_vector)| {
+                    .for_each(|(i, &simulation_box_edge)| {
                         if !simbox.periodicity[i] {
                             return;
                         }
-                        let basis_vector_norm = euclidean_norm(&basis_vector);
+                        let basis_vector_norm = euclidean_norm(&simulation_box_edge);
                         let mut projection_scaling_factor_dot_product = 0.0;
                         for dimension in 0..3 {
                             projection_scaling_factor_dot_product +=
-                                distance_vector[dimension] * basis_vector[dimension];
+                                distance_vector[dimension] * simulation_box_edge[dimension];
                         }
                         let projection_scaling_factor =
                             projection_scaling_factor_dot_product / basis_vector_norm.powi(2);
                         let projection = [
-                            basis_vector[0] * projection_scaling_factor,
-                            basis_vector[1] * projection_scaling_factor,
-                            basis_vector[2] * projection_scaling_factor,
+                            simulation_box_edge[0] * projection_scaling_factor,
+                            simulation_box_edge[1] * projection_scaling_factor,
+                            simulation_box_edge[2] * projection_scaling_factor,
                         ];
                         let projection_norm = euclidean_norm(&projection);
                         let norms_ratio = projection_norm / basis_vector_norm;
                         if norms_ratio > 0.5 {
-                            distance_vector[0] -= basis_vector[0];
-                            distance_vector[1] -= basis_vector[1];
-                            distance_vector[2] -= basis_vector[2];
+                            distance_vector[0] -= simulation_box_edge[0];
+                            distance_vector[1] -= simulation_box_edge[1];
+                            distance_vector[2] -= simulation_box_edge[2];
                         } else if norms_ratio <= -0.5 {
-                            distance_vector[0] += basis_vector[0];
-                            distance_vector[1] += basis_vector[1];
-                            distance_vector[2] += basis_vector[2];
+                            distance_vector[0] += simulation_box_edge[0];
+                            distance_vector[1] += simulation_box_edge[1];
+                            distance_vector[2] += simulation_box_edge[2];
                         }
                     });
                 let distance = euclidean_norm(&distance_vector);

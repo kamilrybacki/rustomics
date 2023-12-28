@@ -45,11 +45,10 @@ impl CalculatePotential for LennardJonesModel {
         match distance < self.cutoff {
             true => match distance > 0.0 {
                 true => {
-                    let r7 = distance.powi(3);
-                    let r13 = distance.powi(2);
-                    -48.0
-                        * self.epsilon
-                        * ((self.sigma.powi(12) / r13) - 0.5 * (self.sigma.powi(6) / r7))
+                    let r6 = distance.powi(6);
+                    let r12 = distance.powi(12);
+                    (24.0 * self.epsilon)
+                        * ((2.0 * self.sigma.powi(12) / r12) - (self.sigma.powi(6) / r6))
                 }
                 // Lennard-Jones potential is infinite at r = 0
                 false => f64::INFINITY,

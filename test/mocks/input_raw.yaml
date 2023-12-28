@@ -1,9 +1,9 @@
 system:
   origin: [0, 0, 0]
-  vectors:
-    - [2.45, 0, 0]
-    - [0, 2.45, 0]
-    - [0, 0, 2.45]
+  cell:
+    - [4.04, 0, 0]
+    - [0, 4.04, 0]
+    - [0, 0, 4.04]
   atoms:
     - name: Al
       position: [0, 0, 0]
@@ -38,24 +38,24 @@ logger:
             - potential_energy
             - kinetic_energy
             - total_energy
-  frequency: 2
+  frequency: 1
   precision: 3
 dynamics:
   integrator:
     type: verlet
     flavor: velocity
   timestep: 0.001
-  steps: 10
+  steps: 3
 thermodynamics:
   ensemble:
     type: nve
 potential:
   model: lj
   parameters:
-    epsilon: 1.0
-    sigma: 1.0
-  cutoff: 4.0
+    epsilon: 0.4080
+    sigma: 2.551
+  cutoff: 8.5
 neighbours:
-  cutoff: 4.0
+  cutoff: 8.5
   frequency: 1
   log: false

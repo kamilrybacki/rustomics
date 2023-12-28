@@ -8,6 +8,7 @@ use yaml_rust::Yaml;
 use crate::data::load::load_atoms;
 use crate::data::load::to_vec_f64;
 use crate::data::metrics::UnitSystem;
+use crate::logic::algebra::euclidean_norm;
 use crate::system::base::atom::Atom;
 use crate::system::r#box::SimulationBox;
 
@@ -29,7 +30,7 @@ impl SystemDefinition {
     }
     fn initialize_system(config: &Yaml) -> SystemDefinition {
         let box_origin = to_vec_f64::<3>(&config["origin"]);
-        let box_vectors = config["vectors"]
+        let box_vectors = config["cell"]
             .as_vec()
             .unwrap()
             .iter()
@@ -85,15 +86,19 @@ impl SystemDefinition {
     pub fn wrap_atom_positions(&mut self) -> () {
         self.atoms.par_iter_mut().for_each(|atom| {
             for dimension in 0..3 {
-                if atom.current.position[dimension] < 0.0 {
-                    atom.current.position[dimension] +=
-                        self.simulation_box.cell.vectors[dimension][dimension];
-                } else if atom.current.position[dimension]
-                    > self.simulation_box.cell.vectors[dimension][dimension]
-                {
-                    atom.current.position[dimension] -=
-                        self.simulation_box.cell.vectors[dimension][dimension];
+                if !self.simulation_box.periodicity[dimension] {
+                    continue;
                 }
+                let position_projection_onto_vector = atom
+                    .current
+                    .position
+                    .iter()
+                    .enumerate()
+                    .map(|(component, coordinate)| {
+                        coordinate * self.simulation_box.versors[dimension][component]
+                    })
+                    .sum::<f64>()
+                    / self.simulation_box.dimensions[dimension];
             }
         });
     }

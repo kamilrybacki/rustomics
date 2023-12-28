@@ -41,11 +41,11 @@ impl PotentialModel {
                         }
                     };
                     atom.current.force = [
-                        atom.current.force[0]
+                        -atom.current.force[0]
                             + force * neighbour.distance_vector[0] / neighbour.distance,
-                        atom.current.force[1]
+                        -atom.current.force[1]
                             + force * neighbour.distance_vector[1] / neighbour.distance,
-                        atom.current.force[2]
+                        -atom.current.force[2]
                             + force * neighbour.distance_vector[2] / neighbour.distance,
                     ];
                 })
