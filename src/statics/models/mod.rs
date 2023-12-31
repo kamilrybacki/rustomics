@@ -2,6 +2,8 @@ mod lj;
 
 use rayon::prelude::*;
 
+use nalgebra::Vector3;
+
 use crate::dynamics::neighbours::NeighboursList;
 use crate::system::base::atom::Atom;
 
@@ -24,7 +26,7 @@ impl PotentialModel {
     pub fn update(&self, atoms: &mut Vec<Atom>, neighbours_list: &NeighboursList) -> () {
         atoms.par_iter_mut().enumerate().for_each(|(i, atom)| {
             atom.previous = atom.current.cache();
-            atom.current.force = [0.0; 3];
+            atom.current.force = Vector3::zeros();
             atom.current.potential_energy = 0.0;
             neighbours_list
                 .get_neighbours(i as u64)
@@ -40,14 +42,14 @@ impl PotentialModel {
                             model.calculate_force(neighbour.distance)
                         }
                     };
-                    atom.current.force = [
-                        -atom.current.force[0]
+                    atom.current.force = Vector3::new(
+                        atom.current.force[0]
                             + force * neighbour.distance_vector[0] / neighbour.distance,
-                        -atom.current.force[1]
+                        atom.current.force[1]
                             + force * neighbour.distance_vector[1] / neighbour.distance,
-                        -atom.current.force[2]
+                        atom.current.force[2]
                             + force * neighbour.distance_vector[2] / neighbour.distance,
-                    ];
+                    );
                 })
         })
     }

@@ -53,15 +53,16 @@ impl NeighboursList {
         }
     }
     fn update_for_atom(&mut self, index: usize, atoms: &Vec<Atom>, simbox: &SimulationBox) -> () {
+        todo!("Use change-of-basis matrix for non-orthogonal bases, insted of the following code with dot product");
         let new_neighbours = atoms
             .par_iter()
             .enumerate()
             .filter(|(j, _)| *j != index)
             .map(|(j, neighbour)| {
                 let mut distance_vector = Vector3::<f64>::new(
-                    neighbour.current.position[0] - atoms[index as usize].current.position[0],
-                    neighbour.current.position[1] - atoms[index as usize].current.position[1],
-                    neighbour.current.position[2] - atoms[index as usize].current.position[2],
+                    neighbour.current.absolute_position[0] - atoms[index as usize].current.absolute_position[0],
+                    neighbour.current.absolute_position[1] - atoms[index as usize].current.absolute_position[1],
+                    neighbour.current.absolute_position[2] - atoms[index as usize].current.absolute_position[2],
                 );
                 // Calculate projections on basis vectors and apply minimum image conventions
                 simbox

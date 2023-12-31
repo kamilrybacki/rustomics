@@ -33,16 +33,16 @@ impl NextStepCalculation for VerletIntegrator {
     fn next_positions(&mut self, atoms: &mut Vec<Atom>) -> () {
         atoms.par_iter_mut().for_each(|atom| {
             for dimension in 0..3 {
-                atom.current.position[dimension] = match self.flavor.as_str() {
+                atom.current.absolute_position[dimension] = match self.flavor.as_str() {
                     "velocity" => {
-                        atom.current.position[dimension]
+                        atom.current.absolute_position[dimension]
                             + atom.current.velocity[dimension] * self.timestep
                             + 0.5 * atom.current.force[dimension] / atom.mass
                                 * self.timestep.powi(2)
                     }
                     _ => {
                         println!("Unknown flavor");
-                        atom.current.position[dimension]
+                        atom.current.absolute_position[dimension]
                     }
                 };
             }

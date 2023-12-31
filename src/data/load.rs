@@ -1,6 +1,8 @@
 use std::fs::read_to_string;
 use yaml_rust::Yaml;
 
+use nalgebra::Vector3;
+
 use crate::system::base::atom::Atom;
 
 pub fn parse_yaml(filepath: &str) -> yaml_rust::Yaml {
@@ -30,6 +32,11 @@ pub fn to_vec_f64<const SIZE: usize>(yaml: &yaml_rust::Yaml) -> [f64; SIZE] {
         .collect::<Vec<f64>>()
         .try_into()
         .unwrap()
+}
+
+pub fn to_vec3(yaml: &yaml_rust::Yaml) -> Vector3<f64> {
+    let vectorized_yaml_entry: [f64; 3] = to_vec_f64::<3>(&yaml);
+    Vector3::from(vectorized_yaml_entry)
 }
 
 pub fn load_atoms(yaml: &yaml_rust::Yaml) -> Vec<Atom> {
