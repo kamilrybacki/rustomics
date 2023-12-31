@@ -220,7 +220,8 @@ impl SimulationLogger {
     }
 
     pub fn log_simulation_state(&self, simulation: &Simulation) -> () {
-        if simulation.clock.current_step % self.frequency == 0 {
+        if simulation.clock.current_step % self.frequency == 0 || simulation.clock.current_step == 1
+        {
             let collected_logs: Vec<HashMap<String, Vec<Vec<(String, String)>>>> = self
                 .redirects
                 .iter()
@@ -277,6 +278,10 @@ impl SimulationLogger {
         }
     }
 
+    fn format_value(&self, value: f64) -> String {
+        format!("{0:1.prec$e}", value, prec = self.precision).replace("e0", "")
+    }
+
     fn construct_current_state_log(
         &self,
         simulation: &Simulation,
@@ -310,18 +315,18 @@ impl SimulationLogger {
                                 };
                                 let field_value: Option<String> = match field.as_str() {
                                     "id" => Some(format!("{:}", atom.id + 1)),
-                                    "x" => Some(format!("{0:1.2e}", atom.current.position[0])),
-                                    "y" => Some(format!("{0:1.2e}", atom.current.position[1])),
-                                    "z" => Some(format!("{0:1.2e}", atom.current.position[2])),
+                                    "x" => Some(self.format_value(atom.current.position[0])),
+                                    "y" => Some(self.format_value(atom.current.position[1])),
+                                    "z" => Some(self.format_value(atom.current.position[2])),
                                     "type" => Some(format!("{:}", atom.name)),
-                                    "vx" => Some(format!("{0:1.2e}", atom.current.velocity[0])),
-                                    "vy" => Some(format!("{0:1.2e}", atom.current.velocity[1])),
-                                    "vz" => Some(format!("{0:1.2e}", atom.current.velocity[2])),
-                                    "fx" => Some(format!("{0:1.2e}", atom.current.force[0])),
-                                    "fy" => Some(format!("{0:1.2e}", atom.current.force[1])),
-                                    "fz" => Some(format!("{0:1.2e}", atom.current.force[2])),
-                                    "mass" => Some(format!("{0:1.2e}", atom.mass)),
-                                    "charge" => Some(format!("{0:1.2e}", atom.charge)),
+                                    "vx" => Some(self.format_value(atom.current.velocity[0])),
+                                    "vy" => Some(self.format_value(atom.current.velocity[1])),
+                                    "vz" => Some(self.format_value(atom.current.velocity[2])),
+                                    "fx" => Some(self.format_value(atom.current.force[0])),
+                                    "fy" => Some(self.format_value(atom.current.force[1])),
+                                    "fz" => Some(self.format_value(atom.current.force[2])),
+                                    "mass" => Some(self.format_value(atom.mass)),
+                                    "charge" => Some(self.format_value(atom.charge)),
                                     _ => None,
                                 };
                                 match field_value {
@@ -340,19 +345,18 @@ impl SimulationLogger {
                         for field in section_fields {
                             let found_value = match field.as_str() {
                                 "step" => Some(format!("{:}", simulation.clock.current_step)),
-                                "time" => Some(format!("{0:1.2e}", simulation.clock.current_time)),
-                                "potential_energy" => Some(format!(
-                                    "{0:1.2e}",
-                                    simulation.energetics.potential_energy
-                                )),
+                                "time" => Some(self.format_value(simulation.clock.current_time)),
+                                "potential_energy" => {
+                                    Some(self.format_value(simulation.energetics.potential_energy))
+                                }
                                 "kinetic_energy" => {
-                                    Some(format!("{0:1.2e}", simulation.energetics.kinetic_energy))
+                                    Some(self.format_value(simulation.energetics.kinetic_energy))
                                 }
                                 "total_energy" => {
-                                    Some(format!("{0:1.2e}", simulation.energetics.total_energy))
+                                    Some(self.format_value(simulation.energetics.total_energy))
                                 }
                                 "temperature" => {
-                                    Some(format!("{0:1.2e}", simulation.energetics.temperature))
+                                    Some(self.format_value(simulation.energetics.temperature))
                                 }
                                 _ => None,
                             };

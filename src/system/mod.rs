@@ -2,13 +2,14 @@ pub mod base;
 pub mod r#box;
 pub mod thermodynamics;
 
+use nalgebra::Matrix3;
+
 use rayon::prelude::*;
 use yaml_rust::Yaml;
 
 use crate::data::load::load_atoms;
 use crate::data::load::to_vec_f64;
 use crate::data::metrics::UnitSystem;
-use crate::logic::algebra::euclidean_norm;
 use crate::system::base::atom::Atom;
 use crate::system::r#box::SimulationBox;
 
@@ -33,11 +34,10 @@ impl SystemDefinition {
         let box_vectors = config["cell"]
             .as_vec()
             .unwrap()
-            .iter()
+            .par_iter()
             .map(|x| to_vec_f64::<3>(x))
-            .collect::<Vec<[f64; 3]>>()
-            .try_into()
-            .unwrap();
+            .flatten()
+            .collect::<Vec<f64>>();
         let box_periodicity = match &config["periodicity"] {
             Yaml::BadValue => [false, false, false],
             Yaml::String(x) => match x.as_str() {
@@ -75,7 +75,7 @@ impl SystemDefinition {
         SystemDefinition {
             simulation_box: SimulationBox::new(
                 box_origin,
-                box_vectors,
+                Matrix3::from_vec(box_vectors),
                 box_periodicity,
                 unit_cell_replications,
             ),
@@ -83,25 +83,7 @@ impl SystemDefinition {
             units: UnitSystem::new(&config["units"]),
         }
     }
-    pub fn wrap_atom_positions(&mut self) -> () {
-        self.atoms.par_iter_mut().for_each(|atom| {
-            for dimension in 0..3 {
-                if !self.simulation_box.periodicity[dimension] {
-                    continue;
-                }
-                let position_projection_onto_vector = atom
-                    .current
-                    .position
-                    .iter()
-                    .enumerate()
-                    .map(|(component, coordinate)| {
-                        coordinate * self.simulation_box.versors[dimension][component]
-                    })
-                    .sum::<f64>()
-                    / self.simulation_box.dimensions[dimension];
-            }
-        });
-    }
+    pub fn wrap_atom_positions(&mut self) -> () {}
 }
 
 impl std::fmt::Display for SystemDefinition {
@@ -109,7 +91,7 @@ impl std::fmt::Display for SystemDefinition {
         let box_definition = self.simulation_box.to_string();
         let atoms_description: String = self
             .atoms
-            .iter()
+            .par_iter()
             .map(|x| format!("  {}", x))
             .collect::<Vec<String>>()
             .join("\n");

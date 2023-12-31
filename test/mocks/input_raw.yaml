@@ -39,7 +39,7 @@ logger:
             - kinetic_energy
             - total_energy
   frequency: 1
-  precision: 3
+  precision: 2
 dynamics:
   integrator:
     type: verlet

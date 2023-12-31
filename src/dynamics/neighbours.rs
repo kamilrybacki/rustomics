@@ -1,13 +1,14 @@
 use std::collections::HashMap;
 
-use crate::logic::algebra::euclidean_norm;
+use nalgebra::Vector3;
+
 use crate::system::base::atom::Atom;
 use crate::system::r#box::SimulationBox;
 
 use rayon::prelude::*;
 
 pub struct NeighboursList {
-    pub neighbours: HashMap<u64, Vec<(u64, [f64; 3], f64)>>,
+    pub neighbours: HashMap<u64, Vec<(u64, Vector3<f64>, f64)>>,
     pub log: bool,
     pub frequency: u64,
     cutoff: f64,
@@ -16,7 +17,7 @@ pub struct NeighboursList {
 #[derive(Debug)]
 pub struct NeighboursListEntry {
     pub index: u64,
-    pub distance_vector: [f64; 3],
+    pub distance_vector: Vector3<f64>,
     pub distance: f64,
 }
 
@@ -57,21 +58,25 @@ impl NeighboursList {
             .enumerate()
             .filter(|(j, _)| *j != index)
             .map(|(j, neighbour)| {
-                let mut distance_vector = [
+                let mut distance_vector = Vector3::<f64>::new(
                     neighbour.current.position[0] - atoms[index as usize].current.position[0],
                     neighbour.current.position[1] - atoms[index as usize].current.position[1],
                     neighbour.current.position[2] - atoms[index as usize].current.position[2],
-                ];
+                );
                 // Calculate projections on basis vectors and apply minimum image conventions
                 simbox
                     .vectors
-                    .iter()
+                    .row_iter()
                     .enumerate()
-                    .for_each(|(i, &simulation_box_edge)| {
+                    .for_each(|(i, simulation_box_edge)| {
                         if !simbox.periodicity[i] {
                             return;
                         }
-                        let basis_vector_norm = euclidean_norm(&simulation_box_edge);
+                        let basis_vector_norm = simulation_box_edge
+                            .iter()
+                            .map(|x| x.powi(2))
+                            .sum::<f64>()
+                            .sqrt();
                         let mut projection_scaling_factor_dot_product = 0.0;
                         for dimension in 0..3 {
                             projection_scaling_factor_dot_product +=
@@ -79,12 +84,12 @@ impl NeighboursList {
                         }
                         let projection_scaling_factor =
                             projection_scaling_factor_dot_product / basis_vector_norm.powi(2);
-                        let projection = [
+                        let projection = Vector3::<f64>::new(
                             simulation_box_edge[0] * projection_scaling_factor,
                             simulation_box_edge[1] * projection_scaling_factor,
                             simulation_box_edge[2] * projection_scaling_factor,
-                        ];
-                        let projection_norm = euclidean_norm(&projection);
+                        );
+                        let projection_norm = projection.norm();
                         let norms_ratio = projection_norm / basis_vector_norm;
                         if norms_ratio > 0.5 {
                             distance_vector[0] -= simulation_box_edge[0];
@@ -96,13 +101,13 @@ impl NeighboursList {
                             distance_vector[2] += simulation_box_edge[2];
                         }
                     });
-                let distance = euclidean_norm(&distance_vector);
+                let distance = distance_vector.norm();
                 if distance < self.cutoff {
                     return (j.try_into().unwrap(), distance_vector, distance);
                 }
-                return (0, [0.0, 0.0, 0.0], 0.0);
+                return (0, Vector3::zeros(), 0.0);
             })
-            .filter(|(j, d, _)| *j != 0 && *d != [0.0, 0.0, 0.0]);
+            .filter(|(j, d, _)| *j != 0 && *d != Vector3::zeros());
         self.neighbours
             .insert(index.try_into().unwrap(), new_neighbours.collect());
     }
