@@ -2,8 +2,7 @@ use std::collections::HashMap;
 
 use nalgebra::Vector3;
 
-use crate::system::base::atom::Atom;
-use crate::system::r#box::SimulationBox;
+use crate::system::SystemDefinition;
 
 use rayon::prelude::*;
 
@@ -52,72 +51,59 @@ impl NeighboursList {
             },
         }
     }
-    fn update_for_atom(&mut self, index: usize, atoms: &Vec<Atom>, simbox: &SimulationBox) -> () {
-        todo!("Use change-of-basis matrix for non-orthogonal bases, insted of the following code with dot product");
-        let new_neighbours = atoms
+    fn update_for_atom(&mut self, index: usize, system: &SystemDefinition) -> () {
+        let new_neighbours = system
+            .atoms
             .par_iter()
             .enumerate()
             .filter(|(j, _)| *j != index)
-            .map(|(j, neighbour)| {
-                let mut distance_vector = Vector3::<f64>::new(
-                    neighbour.current.absolute_position[0] - atoms[index as usize].current.absolute_position[0],
-                    neighbour.current.absolute_position[1] - atoms[index as usize].current.absolute_position[1],
-                    neighbour.current.absolute_position[2] - atoms[index as usize].current.absolute_position[2],
+            .map(|(neighbour_index, neighbour)| {
+                let mut distance_vector =
+                Vector3::<f64>::new(
+                    neighbour.current.absolute_position[0]
+                        - system.atoms[index as usize].current.absolute_position[0],
+                    neighbour.current.absolute_position[1]
+                        - system.atoms[index as usize].current.absolute_position[1],
+                    neighbour.current.absolute_position[2]
+                        - system.atoms[index as usize].current.absolute_position[2],
                 );
-                // Calculate projections on basis vectors and apply minimum image conventions
-                simbox
-                    .vectors
-                    .row_iter()
-                    .enumerate()
-                    .for_each(|(i, simulation_box_edge)| {
-                        if !simbox.periodicity[i] {
-                            return;
-                        }
-                        let basis_vector_norm = simulation_box_edge
-                            .iter()
-                            .map(|x| x.powi(2))
-                            .sum::<f64>()
-                            .sqrt();
-                        let mut projection_scaling_factor_dot_product = 0.0;
-                        for dimension in 0..3 {
-                            projection_scaling_factor_dot_product +=
-                                distance_vector[dimension] * simulation_box_edge[dimension];
-                        }
-                        let projection_scaling_factor =
-                            projection_scaling_factor_dot_product / basis_vector_norm.powi(2);
-                        let projection = Vector3::<f64>::new(
-                            simulation_box_edge[0] * projection_scaling_factor,
-                            simulation_box_edge[1] * projection_scaling_factor,
-                            simulation_box_edge[2] * projection_scaling_factor,
-                        );
-                        let projection_norm = projection.norm();
-                        let norms_ratio = projection_norm / basis_vector_norm;
-                        if norms_ratio > 0.5 {
-                            distance_vector[0] -= simulation_box_edge[0];
-                            distance_vector[1] -= simulation_box_edge[1];
-                            distance_vector[2] -= simulation_box_edge[2];
-                        } else if norms_ratio <= -0.5 {
-                            distance_vector[0] += simulation_box_edge[0];
-                            distance_vector[1] += simulation_box_edge[1];
-                            distance_vector[2] += simulation_box_edge[2];
-                        }
-                    });
-                let distance = distance_vector.norm();
-                if distance < self.cutoff {
-                    return (j.try_into().unwrap(), distance_vector, distance);
-                }
-                return (0, Vector3::zeros(), 0.0);
+                system
+                  .simulation_box
+                  .vectors
+                  .row_iter()
+                  .for_each(|basis_vector| {
+                      let basis_vector = Vector3::<f64>::new(
+                          basis_vector[0],
+                          basis_vector[1],
+                          basis_vector[2],
+                      );
+                      let distance_vector_projection =
+                          distance_vector.dot(&basis_vector) / basis_vector.norm();
+                      let relative_coordinate = distance_vector_projection / basis_vector.norm();
+                      let minimum_image_coefficient = (relative_coordinate <= -0.5) as i64 as f64 * -1.0;
+                      if minimum_image_coefficient != 0.0 {
+                          distance_vector += minimum_image_coefficient * basis_vector;
+                      };
+                });
+                (
+                    neighbour_index as u64,
+                    distance_vector,
+                    distance_vector.norm(),
+                )
             })
-            .filter(|(j, d, _)| *j != 0 && *d != Vector3::zeros());
+            .filter(|(_, _, distance)| *distance < self.cutoff)
+            .collect::<Vec<(u64, Vector3<f64>, f64)>>();
         self.neighbours
-            .insert(index.try_into().unwrap(), new_neighbours.collect());
+            .insert(index.try_into().unwrap(), new_neighbours);
     }
-    pub fn update(&mut self, atoms: &Vec<Atom>, simbox: &SimulationBox) -> () {
+    pub fn update(&mut self, system: &mut SystemDefinition) -> () {
+        system.wrap_atom_positions();
         self.neighbours.clear();
-        atoms
+        system
+            .atoms
             .iter()
             .enumerate()
-            .for_each(|(index, _)| self.update_for_atom(index, atoms, simbox));
+            .for_each(|(index, _)| self.update_for_atom(index, system));
     }
     pub fn get_neighbours(&self, index: u64) -> Vec<NeighboursListEntry> {
         match self.neighbours.get(&(index as u64)) {

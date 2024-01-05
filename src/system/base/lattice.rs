@@ -10,7 +10,8 @@ pub fn scale_cell_basis(atoms: &mut Vec<Atom>, simulation_box: &SimulationBox) -
     atoms.par_iter_mut().for_each(|atom| {
         let mut scaled_position = Vector3::<f64>::zeros();
         for i in 0..3 {
-            scaled_position[i] = atom.current.absolute_position[i] * simulation_box.cell.vectors[(i, i)];
+            scaled_position[i] =
+                atom.current.absolute_position[i] * simulation_box.cell.vectors[(i, i)];
         }
         atom.current.absolute_position = scaled_position;
     });

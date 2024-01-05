@@ -36,9 +36,9 @@ impl std::fmt::Display for UnitCell {
 pub struct SimulationBox {
     pub cell: UnitCell,
     pub origin: [f64; 3],                     // Origin of the simulation box
-    pub vectors: Matrix3<f64>,      // Simulation box vectors
-    pub versors: Matrix3<f64>,      // Simulation box versors
-    pub dimensions: Vector3<f64>,                 // Dimensions of the simulation box
+    pub vectors: Matrix3<f64>,                // Simulation box vectors
+    pub versors: Matrix3<f64>,                // Simulation box versors
+    pub dimensions: Vector3<f64>,             // Dimensions of the simulation box
     pub replicas: [usize; 3],                 // Number of replicas in each direction
     pub periodicity: [bool; 3],               // Periodicity of the simulation box
     pub change_of_basis_matrix: Matrix3<f64>, // Matrix mapping between global coordinates and simulation box coordinates
@@ -73,15 +73,9 @@ impl SimulationBox {
             new_vectors[(i, i)] *= self.replicas[i] as f64;
         }
         let new_dimensions: Vector3<f64> = Vector3::new(
-          new_vectors
-            .row(0)
-            .norm(),
-          new_vectors
-            .row(1)
-            .norm(),
-          new_vectors
-            .row(2)
-            .norm(),
+            new_vectors.row(0).norm(),
+            new_vectors.row(1).norm(),
+            new_vectors.row(2).norm(),
         );
         let mut new_versors = Matrix3::<f64>::zeros();
         for i in 0..3 {
@@ -95,19 +89,18 @@ impl SimulationBox {
     }
 
     fn calculate_mapping_matrix(&mut self) -> () {
-        self.change_of_basis_matrix = match self.vectors.try_inverse() {
-            Some(x) => x,
-            None => panic!("Could not invert simulation box basis vectors matrix"),
+        let change_of_basis_matrix = self.vectors.normalize();
+        match change_of_basis_matrix.try_inverse() {
+            Some(_) => self.change_of_basis_matrix = change_of_basis_matrix,
+            None => panic!("Could not invert change of basis matrix"),
         }
     }
 
-    fn map_vector_to_box_basis(&self, vector: &Vector3<f64>) -> Vector3<f64> {
-        let mut mapped_vector = Vector3::<f64>::zeros();
+    pub fn map_vector_to_box_basis(&self, vector: &Vector3<f64>) -> Vector3<f64> {
         self.change_of_basis_matrix * vector
     }
 
-    fn map_vector_to_global_basis(&self, vector: &Vector3<f64>) -> Vector3<f64> {
-        let mut mapped_vector = Vector3::<f64>::zeros();
+    pub fn map_vector_to_system_basis(&self, vector: &Vector3<f64>) -> Vector3<f64> {
         self.change_of_basis_matrix.try_inverse().unwrap() * vector
     }
 }

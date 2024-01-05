@@ -315,9 +315,15 @@ impl SimulationLogger {
                                 };
                                 let field_value: Option<String> = match field.as_str() {
                                     "id" => Some(format!("{:}", atom.id + 1)),
-                                    "x" => Some(self.format_value(atom.current.absolute_position[0])),
-                                    "y" => Some(self.format_value(atom.current.absolute_position[1])),
-                                    "z" => Some(self.format_value(atom.current.absolute_position[2])),
+                                    "x" => {
+                                        Some(self.format_value(atom.current.absolute_position[0]))
+                                    }
+                                    "y" => {
+                                        Some(self.format_value(atom.current.absolute_position[1]))
+                                    }
+                                    "z" => {
+                                        Some(self.format_value(atom.current.absolute_position[2]))
+                                    }
                                     "type" => Some(format!("{:}", atom.name)),
                                     "vx" => Some(self.format_value(atom.current.velocity[0])),
                                     "vy" => Some(self.format_value(atom.current.velocity[1])),
