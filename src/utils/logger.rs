@@ -11,6 +11,7 @@ const DEFAULT_PRECISION: usize = 3;
 fn get_header_label(field_name: &str) -> String {
     match field_name {
         "step" => "Step".to_string(),
+        "name" => "Name".to_string(),
         "time" => "Time".to_string(),
         "id" => "ID".to_string(),
         "x" => "X".to_string(),
@@ -52,8 +53,17 @@ fn print_to_stdout(message: &str) {
     io::stdout().flush().unwrap();
 }
 
-fn create_print_to_file_handler(filename: &str) -> fn(&str) {
-  
+fn print_to_file(message: &str) {
+    let (filename, message) = match message.split("|").collect::<Vec<&str>>().as_slice() {
+        [filename, message] => (*filename, *message),
+        _ => panic!("Invalid message format"),
+    };
+    let mut file = std::fs::OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open(filename)
+        .unwrap();
+    file.write_all(message.as_bytes()).unwrap();
 }
 
 fn construct_format(section_yaml: &yaml_rust::Yaml, section_type: &str) -> Vec<String> {
@@ -136,22 +146,35 @@ fn construct_redirect(redirect_definition: &yaml_rust::Yaml) -> Option<LogsRedir
             println!("File redirect not implemented yet, skipping");
             return None;
         }
-        "xyz" => Some(LogsRedirect {
-            name: "xyz".to_string(),
-            sections: HashMap::from([(
-                "xyz".to_string(),
-                vec!["name", "x", "y", "z"]
-                    .iter()
-                    .map(|x| x.to_string())
-                    .collect::<Vec<String>>(),
-            )]),
-            precision: match redirect_definition["precision"].as_i64() {
-                Some(x) => x as usize,
-                None => DEFAULT_PRECISION,
-            },
-            handler: print_to_file(redirect_definition["filename"].as_str().unwrap()),
-            _options: HashMap::new(),
-        }),
+        "xyz" => {
+            let _ = std::fs::remove_file(redirect_definition["filename"].as_str().unwrap());
+            Some(LogsRedirect {
+                name: "xyz".to_string(),
+                sections: HashMap::from([(
+                    "xyz".to_string(),
+                    vec!["name", "x", "y", "z"]
+                        .iter()
+                        .map(|x| x.to_string())
+                        .collect::<Vec<String>>(),
+                )]),
+                precision: match redirect_definition["precision"].as_i64() {
+                    Some(x) => x as usize,
+                    None => DEFAULT_PRECISION,
+                },
+                handler: print_to_file,
+                _options: {
+                    let mut options = HashMap::new();
+                    options.insert(
+                        "filename".to_string(),
+                        redirect_definition["filename"]
+                            .as_str()
+                            .unwrap()
+                            .to_string(),
+                    );
+                    options
+                },
+            })
+        }
         _ => {
             println!("Unknown redirect, skipping");
             return None;
@@ -243,50 +266,64 @@ impl SimulationLogger {
     pub fn log_simulation_state(&self, simulation: &Simulation) -> () {
         if simulation.clock.current_step % self.frequency == 0 || simulation.clock.current_step == 1
         {
-            let collected_logs: Vec<HashMap<String, Vec<Vec<(String, String)>>>> = self
-                .redirects
-                .iter()
-                .map(|redirect| self.construct_current_state_log(simulation, &redirect.sections))
-                .collect::<Vec<HashMap<String, Vec<Vec<(String, String)>>>>>();
-            let serialized_logs = self.serialize_collected_logs(collected_logs);
-            for log in serialized_logs {
-                println!("{}", log);
-            }
+            self.redirects.iter().for_each(|redirect| {
+                let collected_logs =
+                    self.construct_current_state_log(simulation, &redirect.sections);
+                let serialized_logs = self.serialize_collected_logs(collected_logs);
+                if redirect.name == "xyz" {
+                    (redirect.handler)(&format!(
+                        "{}|{}",
+                        redirect._options["filename"], serialized_logs
+                    ));
+                } else {
+                    (redirect.handler)(&serialized_logs);
+                }
+            })
         }
     }
 
     pub fn serialize_collected_logs(
         &self,
-        collected_logs: Vec<HashMap<String, Vec<Vec<(String, String)>>>>,
-    ) -> Vec<String> {
-        let mut serialized_logs: Vec<String> = Vec::new();
-        for log in collected_logs {
-            let mut serialized_log = String::new();
-            for (section_name, section_values) in log.iter() {
-                serialized_log.push_str(&format!("\n[{}]\n", section_name.to_uppercase()));
-                // Print header for columns
-                let mut header = String::new();
-                for field_name in self.redirects[0].sections[section_name].iter() {
-                    header.push_str(&format!("{} ", get_header_label(field_name)));
+        collected_logs: HashMap<String, Vec<Vec<(String, String)>>>,
+    ) -> String {
+        let mut serialized_log = String::new();
+        for (section_name, section_values) in collected_logs.iter() {
+            let mut header = String::new();
+            match section_name.as_str() {
+                "xyz" => {
+                    header.push_str(&format!("{}\n", section_values.len().to_string().as_str()));
+                    header.push_str("Generated via Rustomics");
                 }
-                serialized_log.push_str(&format!("{}\n\n", header));
-                let serialized_values: Vec<String> = section_values
-                    .iter()
-                    .map(|values| {
-                        let mut serialized_values = String::new();
-                        for (_, field_value) in values.iter() {
-                            serialized_values.push_str(&format!("{} ", field_value));
-                        }
-                        serialized_values
-                    })
-                    .collect::<Vec<String>>();
-                for serialized_value in serialized_values {
-                    serialized_log.push_str(&format!("{}\n", serialized_value));
+                _ => {
+                    serialized_log.push_str(&format!("\n[{}]\n", section_name.to_uppercase()));
+                    // Print header for columns
+                    let mut header = String::new();
+                    for field in section_values
+                        .first()
+                        .unwrap()
+                        .iter()
+                        .map(|(field_name, _)| field_name)
+                    {
+                        header.push_str(&format!("{} ", get_header_label(field)));
+                    }
                 }
             }
-            serialized_logs.push(serialized_log);
+            serialized_log.push_str(&format!("{}\n", header));
+            let serialized_values: Vec<String> = section_values
+                .iter()
+                .map(|values| {
+                    let mut serialized_values = String::new();
+                    for (_, field_value) in values.iter() {
+                        serialized_values.push_str(&format!("{} ", field_value));
+                    }
+                    serialized_values
+                })
+                .collect::<Vec<String>>();
+            for serialized_value in serialized_values {
+                serialized_log.push_str(&format!("{}\n", serialized_value));
+            }
         }
-        serialized_logs
+        serialized_log
     }
 
     pub fn construct_neighbours_list_log(&self, neighbours_list: &NeighboursList) -> () {
@@ -312,7 +349,7 @@ impl SimulationLogger {
             .iter()
             .map(|(section_name, section_fields)| {
                 let section_values = match section_name.as_str() {
-                    "atoms" => simulation
+                    "atoms" | "xyz" => simulation
                         .system
                         .atoms
                         .par_iter()
@@ -335,6 +372,7 @@ impl SimulationLogger {
                                     continue;
                                 };
                                 let field_value: Option<String> = match field.as_str() {
+                                    "name" => Some(format!("{:}", atom.name)),
                                     "id" => Some(format!("{:}", atom.id + 1)),
                                     "x" => {
                                         Some(self.format_value(atom.current.absolute_position[0]))

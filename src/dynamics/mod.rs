@@ -1,6 +1,8 @@
 pub mod integrators;
 pub mod neighbours;
 
+use crate::statics::models::PotentialModel;
+use crate::dynamics::neighbours::NeighboursList;
 use crate::system::base::atom::Atom;
 
 pub enum DynamicsIntegrator {
@@ -8,14 +10,9 @@ pub enum DynamicsIntegrator {
 }
 
 impl DynamicsIntegrator {
-    pub fn next_positions(&mut self, atoms: &mut Vec<Atom>) -> () {
+    pub fn next_step(&mut self, atoms: &mut Vec<Atom>, potential: &PotentialModel, neighbours: &mut NeighboursList) -> () {
         match self {
-            DynamicsIntegrator::Verlet(x) => x.next_positions(atoms),
-        }
-    }
-    pub fn next_velocities(&mut self, atoms: &mut Vec<Atom>) -> () {
-        match self {
-            DynamicsIntegrator::Verlet(x) => x.next_velocities(atoms),
+            DynamicsIntegrator::Verlet(x) => x.next_step(atoms, potential, neighbours),
         }
     }
 }
@@ -32,10 +29,7 @@ impl std::fmt::Display for DynamicsIntegrator {
 
 #[allow(unused_variables)]
 trait NextStepCalculation {
-    fn next_positions(&mut self, atoms: &mut Vec<Atom>) -> () {
-        panic!("Not implemented");
-    }
-    fn next_velocities(&mut self, atoms: &mut Vec<Atom>) -> () {
+    fn next_step(&mut self, atoms: &mut Vec<Atom>, potential: &PotentialModel, neighbours: &mut NeighboursList) -> () {
         panic!("Not implemented");
     }
 }

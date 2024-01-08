@@ -39,9 +39,8 @@ logger:
 dynamics:
   integrator:
     type: verlet
-    flavor: velocity
   timestep: 0.001
-  steps: 3
+  steps: 1000
 thermodynamics:
   ensemble:
     type: nve
@@ -53,5 +52,4 @@ potential:
   cutoff: 8.5
 neighbours:
   cutoff: 8.5
-  frequency: 1
   log: false

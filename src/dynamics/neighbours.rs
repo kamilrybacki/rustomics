@@ -9,7 +9,6 @@ use rayon::prelude::*;
 pub struct NeighboursList {
     pub neighbours: HashMap<u64, Vec<(u64, Vector3<f64>, f64)>>,
     pub log: bool,
-    pub frequency: u64,
     cutoff: f64,
 }
 
@@ -40,10 +39,6 @@ impl NeighboursList {
                     Err(_) => panic!("Cutoff must be a real number"),
                 },
                 _ => panic!("Cutoff must be a real number"),
-            },
-            frequency: match &neighbours_settings["frequency"] {
-                yaml_rust::Yaml::Integer(frequency) => *frequency as u64,
-                _ => panic!("Refresh rate must be an integer"),
             },
             log: match &neighbours_settings["log"] {
                 yaml_rust::Yaml::Boolean(log) => *log,

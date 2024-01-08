@@ -33,23 +33,14 @@ impl SimulationRunnerEngine {
             self.simulation.clock.reset();
         }
         while !self.simulation.clock.has_finished() {
-            let should_update_neighbours =
-                self.simulation.clock.current_step % self.simulation.neighbours.frequency == 0;
-            if should_update_neighbours {
-                self.simulation
-                    .neighbours
-                    .update(&mut self.simulation.system);
-            }
             self.simulation
-                .integrator
-                .next_positions(&mut self.simulation.system.atoms);
-            self.simulation.potential_model.update(
+                .neighbours
+                .update(&mut self.simulation.system);
+            self.simulation.integrator.next_step(
                 &mut self.simulation.system.atoms,
-                &self.simulation.neighbours,
+                &self.simulation.potential_model,
+                &mut self.simulation.neighbours,
             );
-            self.simulation
-                .integrator
-                .next_velocities(&mut self.simulation.system.atoms);
             self.thermodynamics.update(&self.simulation);
             self.logger.log_simulation_state(&self.simulation);
             if self.simulation.neighbours.log {
