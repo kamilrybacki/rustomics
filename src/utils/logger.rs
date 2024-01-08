@@ -52,11 +52,16 @@ fn print_to_stdout(message: &str) {
     io::stdout().flush().unwrap();
 }
 
+fn create_print_to_file_handler(filename: &str) -> fn(&str) {
+  
+}
+
 fn construct_format(section_yaml: &yaml_rust::Yaml, section_type: &str) -> Vec<String> {
     let default_formats: HashMap<&str, &str> = HashMap::from([
         ("thermo", "step temperature potential_energy kinetic_energy total_energy"),
         ("neighbours", "id type x y z"),
         ("atoms", "id type x y z vx vy vz fx fy fz mass charge potential_energy kinetic_energy total_energy"),
+        ("xyz", "name x y z")
     ]);
 
     match &section_yaml["format"] {
@@ -131,6 +136,22 @@ fn construct_redirect(redirect_definition: &yaml_rust::Yaml) -> Option<LogsRedir
             println!("File redirect not implemented yet, skipping");
             return None;
         }
+        "xyz" => Some(LogsRedirect {
+            name: "xyz".to_string(),
+            sections: HashMap::from([(
+                "xyz".to_string(),
+                vec!["name", "x", "y", "z"]
+                    .iter()
+                    .map(|x| x.to_string())
+                    .collect::<Vec<String>>(),
+            )]),
+            precision: match redirect_definition["precision"].as_i64() {
+                Some(x) => x as usize,
+                None => DEFAULT_PRECISION,
+            },
+            handler: print_to_file(redirect_definition["filename"].as_str().unwrap()),
+            _options: HashMap::new(),
+        }),
         _ => {
             println!("Unknown redirect, skipping");
             return None;

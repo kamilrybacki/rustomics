@@ -58,8 +58,7 @@ impl NeighboursList {
             .enumerate()
             .filter(|(j, _)| *j != index)
             .map(|(neighbour_index, neighbour)| {
-                let mut distance_vector =
-                Vector3::<f64>::new(
+                let mut distance_vector = Vector3::<f64>::new(
                     neighbour.current.absolute_position[0]
                         - system.atoms[index as usize].current.absolute_position[0],
                     neighbour.current.absolute_position[1]
@@ -68,23 +67,21 @@ impl NeighboursList {
                         - system.atoms[index as usize].current.absolute_position[2],
                 );
                 system
-                  .simulation_box
-                  .vectors
-                  .row_iter()
-                  .for_each(|basis_vector| {
-                      let basis_vector = Vector3::<f64>::new(
-                          basis_vector[0],
-                          basis_vector[1],
-                          basis_vector[2],
-                      );
-                      let distance_vector_projection =
-                          distance_vector.dot(&basis_vector) / basis_vector.norm();
-                      let relative_coordinate = distance_vector_projection / basis_vector.norm();
-                      let minimum_image_coefficient = (relative_coordinate <= -0.5) as i64 as f64 * -1.0;
-                      if minimum_image_coefficient != 0.0 {
-                          distance_vector += minimum_image_coefficient * basis_vector;
-                      };
-                });
+                    .simulation_box
+                    .vectors
+                    .row_iter()
+                    .for_each(|basis_vector| {
+                        let basis_vector =
+                            Vector3::<f64>::new(basis_vector[0], basis_vector[1], basis_vector[2]);
+                        let distance_vector_projection =
+                            distance_vector.dot(&basis_vector) / basis_vector.norm();
+                        let relative_coordinate = distance_vector_projection / basis_vector.norm();
+                        let minimum_image_coefficient =
+                            (relative_coordinate <= -0.5) as i64 as f64 * -1.0;
+                        if minimum_image_coefficient != 0.0 {
+                            distance_vector += minimum_image_coefficient * basis_vector;
+                        };
+                    });
                 (
                     neighbour_index as u64,
                     distance_vector,

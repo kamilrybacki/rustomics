@@ -32,17 +32,18 @@ impl PotentialModel {
                 .get_neighbours(i as u64)
                 .iter_mut()
                 .for_each(|neighbour| {
-                    atom.current.potential_energy += match self {
+                    let current_pair_potential_energy = match self {
                         PotentialModel::LennardJones(model) => {
                             model.calculate_potential(neighbour.distance)
                         }
                     };
+                    atom.current.potential_energy += current_pair_potential_energy;
                     let force = match self {
                         PotentialModel::LennardJones(model) => {
                             model.calculate_force(neighbour.distance)
                         }
                     };
-                    atom.current.force = force * neighbour.distance_vector.normalize();
+                    atom.current.force += force * neighbour.distance_vector.normalize();
                 })
         })
     }

@@ -19,12 +19,8 @@ system:
 logger:
   redirects:
     - atoms_positions_file:
-      sections:
-        - name: atoms
-          format: "id x y z vx vy vz fx fy fz"
-      type: file
+      type: xyz
       filename: output_raw.xyz
-      append: false
     - stdout:
       type: console
       sections:
