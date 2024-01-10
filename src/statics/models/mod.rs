@@ -41,7 +41,7 @@ impl PotentialModel {
                         model.calculate_force(neighbour.distance)
                     }
                 };
-                atom.current.force += force * neighbour.distance_vector.normalize();
+                atom.current.force += -force * neighbour.distance_vector.normalize();
             })
     }
 }

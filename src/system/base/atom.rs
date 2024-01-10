@@ -6,8 +6,7 @@ use crate::data::load::to_vec3;
 
 #[derive(Debug)]
 pub struct CurrentState {
-    pub absolute_position: Vector3<f64>,
-    pub relative_position: Vector3<f64>,
+    pub position: Vector3<f64>,
     pub velocity: Vector3<f64>,
     pub force: Vector3<f64>,
     pub potential_energy: f64,
@@ -17,8 +16,7 @@ pub struct CurrentState {
 
 #[derive(Debug)]
 pub struct PreviousState {
-    pub absolute_position: Vector3<f64>,
-    pub relative_position: Vector3<f64>,
+    pub position: Vector3<f64>,
     pub velocity: Vector3<f64>,
     pub force: Vector3<f64>,
     pub potential_energy: f64,
@@ -29,8 +27,7 @@ pub struct PreviousState {
 impl CurrentState {
     pub fn cache(&self) -> PreviousState {
         PreviousState {
-            absolute_position: self.absolute_position,
-            relative_position: self.relative_position,
+            position: self.position,
             velocity: self.velocity,
             force: self.force,
             potential_energy: self.potential_energy,
@@ -55,8 +52,7 @@ impl Atom {
         Atom {
             id: 0,
             previous: PreviousState {
-                absolute_position: Vector3::zeros(),
-                relative_position: Vector3::zeros(),
+                position: Vector3::zeros(),
                 velocity: Vector3::zeros(),
                 force: Vector3::zeros(),
                 potential_energy: 0.0,
@@ -64,8 +60,7 @@ impl Atom {
                 total_energy: 0.0,
             },
             current: CurrentState {
-                absolute_position: Vector3::zeros(),
-                relative_position: Vector3::zeros(),
+                position: Vector3::zeros(),
                 velocity: Vector3::zeros(),
                 force: Vector3::zeros(),
                 potential_energy: 0.0,
@@ -79,7 +74,7 @@ impl Atom {
     }
     pub fn from(yaml: &yaml_rust::Yaml) -> Atom {
         let mut atom = Atom::new();
-        atom.current.absolute_position = to_vec3(&yaml["position"]);
+        atom.current.position = to_vec3(&yaml["position"]);
         atom.current.velocity = match &yaml["velocity"] {
             yaml_rust::Yaml::Array(_x) => to_vec3(&yaml["velocity"]),
             _ => Vector3::zeros(),
@@ -115,8 +110,7 @@ impl Atom {
             id: self.id,
             name: self.name.clone(),
             current: CurrentState {
-                absolute_position: self.current.absolute_position,
-                relative_position: self.current.relative_position,
+                position: self.current.position,
                 velocity: self.current.velocity,
                 force: self.current.force,
                 potential_energy: self.current.potential_energy,
@@ -124,8 +118,7 @@ impl Atom {
                 total_energy: self.current.total_energy,
             },
             previous: PreviousState {
-                absolute_position: self.previous.absolute_position,
-                relative_position: self.previous.relative_position,
+                position: self.previous.position,
                 velocity: self.previous.velocity,
                 force: self.previous.force,
                 potential_energy: self.previous.potential_energy,
@@ -145,9 +138,9 @@ impl std::fmt::Display for Atom {
             "{} [{:.2}u] @ ({:.3}, {:.3}, {:.3})",
             self.name,
             self.mass,
-            self.current.absolute_position[0],
-            self.current.absolute_position[1],
-            self.current.absolute_position[2]
+            self.current.position[0],
+            self.current.position[1],
+            self.current.position[2]
         )
     }
 }

@@ -27,10 +27,12 @@ impl SystemDefinition {
         let mut new_system = SystemDefinition::initialize_system(system_definition);
         scale_cell_basis(&mut new_system.atoms, &new_system.simulation_box);
         generate_lattice(&mut new_system.atoms, &new_system.simulation_box);
+        new_system.atoms.par_iter_mut().for_each(|atom| {
+            atom.previous = atom.current.cache();
+        });
         new_system
     }
     fn initialize_system(config: &Yaml) -> SystemDefinition {
-        let box_origin = to_vec_f64::<3>(&config["origin"]);
         let box_vectors = config["cell"]
             .as_vec()
             .unwrap()
@@ -74,7 +76,6 @@ impl SystemDefinition {
         };
         SystemDefinition {
             simulation_box: SimulationBox::new(
-                box_origin,
                 Matrix3::from_vec(box_vectors),
                 box_periodicity,
                 unit_cell_replications,
@@ -83,7 +84,11 @@ impl SystemDefinition {
             units: UnitSystem::new(&config["units"]),
         }
     }
-    pub fn wrap_atom_positions(&mut self) -> () {}
+    pub fn wrap_atom_positions(&mut self) -> () {
+        self.atoms.par_iter_mut().for_each(|atom| {
+            atom.current.position = self.simulation_box.wrap_position(atom.current.position)
+        });
+    }
 }
 
 impl std::fmt::Display for SystemDefinition {

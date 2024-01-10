@@ -12,7 +12,5 @@ impl Thermodynamics {
             ensemble: ensemble::Ensemble::from(&yaml["ensemble"]),
         }
     }
-    pub fn update(&mut self, simulation: &Simulation) -> () {
-        println!("Updating thermodynamics");
-    }
+    pub fn update(&mut self, simulation: &Simulation) -> () {}
 }

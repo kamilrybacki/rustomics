@@ -35,7 +35,6 @@ impl std::fmt::Display for UnitCell {
 #[derive(Debug)]
 pub struct SimulationBox {
     pub cell: UnitCell,
-    pub origin: [f64; 3],                     // Origin of the simulation box
     pub vectors: Matrix3<f64>,                // Simulation box vectors
     pub versors: Matrix3<f64>,                // Simulation box versors
     pub dimensions: Vector3<f64>,             // Dimensions of the simulation box
@@ -46,14 +45,12 @@ pub struct SimulationBox {
 
 impl SimulationBox {
     pub fn new(
-        origin: [f64; 3],
         vectors: Matrix3<f64>,
         periodicity: [bool; 3],
         replicas: [usize; 3],
     ) -> SimulationBox {
         let mut new_box = SimulationBox {
             cell: UnitCell::new(vectors),
-            origin,
             vectors: Matrix3::zeros(),
             versors: Matrix3::zeros(),
             dimensions: Vector3::zeros(),
@@ -63,7 +60,6 @@ impl SimulationBox {
         };
         new_box.calculate_box_vectors();
         new_box.calculate_mapping_matrix();
-        println!("{:?}", new_box);
         new_box
     }
 
@@ -94,6 +90,31 @@ impl SimulationBox {
             Some(_) => self.change_of_basis_matrix = change_of_basis_matrix,
             None => panic!("Could not invert change of basis matrix"),
         }
+    }
+
+    pub fn wrap_position(&self, position: Vector3<f64>) -> Vector3<f64> {
+        let mut new_position = position.clone();
+        // self.periodicity
+        //     .iter()
+        //     .enumerate()
+        //     .for_each(|(dimension, is_periodic)| {
+        //         if *is_periodic {
+        //             self.map_vector_to_box_basis(&new_position)
+        //                 .iter()
+        //                 .map(|component| *component / self.dimensions[dimension])
+        //                 .collect::<Vec<f64>>()
+        //                 .iter()
+        //                 .enumerate()
+        //                 .for_each(|(dimension, component)| {
+        //                   new_position[dimension] += match component {
+        //                       x if *x < 0.0 =>  1.0,
+        //                       x if *x > 1.0 =>  -1.0,
+        //                       _ => 0.0,
+        //                   } * self.vectors[dimension];
+        //                 });
+        //         }
+        //     });
+        new_position
     }
 
     pub fn map_vector_to_box_basis(&self, vector: &Vector3<f64>) -> Vector3<f64> {

@@ -54,12 +54,12 @@ impl NeighboursList {
             .filter(|(j, _)| *j != index)
             .map(|(neighbour_index, neighbour)| {
                 let mut distance_vector = Vector3::<f64>::new(
-                    neighbour.current.absolute_position[0]
-                        - system.atoms[index as usize].current.absolute_position[0],
-                    neighbour.current.absolute_position[1]
-                        - system.atoms[index as usize].current.absolute_position[1],
-                    neighbour.current.absolute_position[2]
-                        - system.atoms[index as usize].current.absolute_position[2],
+                    neighbour.current.position[0]
+                        - system.atoms[index as usize].current.position[0],
+                    neighbour.current.position[1]
+                        - system.atoms[index as usize].current.position[1],
+                    neighbour.current.position[2]
+                        - system.atoms[index as usize].current.position[2],
                 );
                 system
                     .simulation_box

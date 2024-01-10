@@ -25,7 +25,9 @@ impl LennardJonesModel {
     fn calculate_potential_at_distance(&self, r: f64) -> f64 {
         let r6 = r.powi(6);
         let r12 = r6.powi(2);
-        4.0 * self.epsilon * ((self.sigma.powi(12) / r12) - (self.sigma.powi(6) / r6))
+        let potential =
+            4.0 * self.epsilon * ((self.sigma.powi(12) / r12) - (self.sigma.powi(6) / r6));
+        potential
     }
 }
 

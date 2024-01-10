@@ -68,7 +68,7 @@ fn print_to_file(message: &str) {
 
 fn construct_format(section_yaml: &yaml_rust::Yaml, section_type: &str) -> Vec<String> {
     let default_formats: HashMap<&str, &str> = HashMap::from([
-        ("thermo", "step temperature potential_energy kinetic_energy total_energy"),
+        ("thermodynamics", "step temperature potential_energy kinetic_energy total_energy"),
         ("neighbours", "id type x y z"),
         ("atoms", "id type x y z vx vy vz fx fy fz mass charge potential_energy kinetic_energy total_energy"),
         ("xyz", "name x y z")
@@ -208,7 +208,7 @@ impl SimulationLogger {
                 valid_redirects.push(LogsRedirect {
                     name: "console".to_string(),
                     sections: HashMap::from([(
-                        "default_thermo".to_string(),
+                        "thermodynamics".to_string(),
                         vec![
                             "step",
                             "temperature",
@@ -243,7 +243,7 @@ impl SimulationLogger {
             redirects: vec![LogsRedirect {
                 name: "console".to_string(),
                 sections: HashMap::from([(
-                    "default_thermo".to_string(),
+                    "thermodynamics".to_string(),
                     vec![
                         "step",
                         "temperature",
@@ -374,15 +374,9 @@ impl SimulationLogger {
                                 let field_value: Option<String> = match field.as_str() {
                                     "name" => Some(format!("{:}", atom.name)),
                                     "id" => Some(format!("{:}", atom.id + 1)),
-                                    "x" => {
-                                        Some(self.format_value(atom.current.absolute_position[0]))
-                                    }
-                                    "y" => {
-                                        Some(self.format_value(atom.current.absolute_position[1]))
-                                    }
-                                    "z" => {
-                                        Some(self.format_value(atom.current.absolute_position[2]))
-                                    }
+                                    "x" => Some(self.format_value(atom.current.position[0])),
+                                    "y" => Some(self.format_value(atom.current.position[1])),
+                                    "z" => Some(self.format_value(atom.current.position[2])),
                                     "type" => Some(format!("{:}", atom.name)),
                                     "vx" => Some(self.format_value(atom.current.velocity[0])),
                                     "vy" => Some(self.format_value(atom.current.velocity[1])),

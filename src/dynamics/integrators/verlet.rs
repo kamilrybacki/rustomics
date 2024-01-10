@@ -26,14 +26,24 @@ impl std::fmt::Display for VerletIntegrator {
 }
 
 impl NextStepCalculation for VerletIntegrator {
-    fn next_step(&mut self, atoms: &mut Vec<Atom>, potential: &PotentialModel, neighbours: &mut NeighboursList) -> () {
+    fn next_step(
+        &mut self,
+        atoms: &mut Vec<Atom>,
+        potential: &PotentialModel,
+        neighbours: &mut NeighboursList,
+    ) -> () {
         atoms.par_iter_mut().for_each(|atom| {
             atom.previous = atom.current.cache();
             let half_step_velocity = atom.previous.velocity
                 + 0.5 * self.timestep * atom.previous.force / atom.mass;
-            atom.current.absolute_position = atom.previous.absolute_position + self.timestep * half_step_velocity;
+            atom.current.position = atom.previous.position
+                + self.timestep * half_step_velocity;
+            if atom.id == 0 {
+                println!("{} {} {}", atom.current.position[0], atom.current.position[1], atom.current.position[2]);
+            }
             potential.update(atom, neighbours);
-            atom.current.velocity = half_step_velocity + 0.5 * self.timestep * atom.current.force / atom.mass;
+            atom.current.velocity = half_step_velocity
+                + 0.5 * self.timestep * atom.current.force / atom.mass;
         });
     }
 }
