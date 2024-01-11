@@ -2,7 +2,7 @@ extern crate periodic_table_on_an_enum;
 
 use nalgebra::Vector3;
 
-use crate::data::load::to_vec3;
+use crate::io::input::to_vec3;
 
 #[derive(Debug)]
 pub struct CurrentState {

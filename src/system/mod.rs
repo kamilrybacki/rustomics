@@ -7,14 +7,15 @@ use nalgebra::Matrix3;
 use rayon::prelude::*;
 use yaml_rust::Yaml;
 
-use crate::data::load::load_atoms;
-use crate::data::load::to_vec_f64;
-use crate::data::metrics::UnitSystem;
-use crate::system::base::atom::Atom;
-use crate::system::r#box::SimulationBox;
+use crate::io::input::load_atoms;
+use crate::io::input::to_vec_f64;
 
+use crate::system::r#box::SimulationBox;
+use crate::system::base::atom::Atom;
 use crate::system::base::lattice::generate_lattice;
 use crate::system::base::lattice::scale_cell_basis;
+
+use crate::utils::metrics::UnitSystem;
 
 pub struct SystemDefinition {
     pub simulation_box: SimulationBox, // Box origin and vectors

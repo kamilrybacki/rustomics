@@ -1,6 +1,6 @@
 use crate::simulation::Simulation;
 
-use crate::data::load::parse_yaml;
+use crate::io::input::parse_yaml;
 use crate::system::thermodynamics::Thermodynamics;
 use crate::utils::logger::SimulationLogger;
 
