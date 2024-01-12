@@ -64,28 +64,8 @@ impl SimulationBox {
     }
 
     pub fn wrap_position(&self, position: Vector3<f64>) -> Vector3<f64> {
-        let mut new_position = position.clone();
-        // self.periodicity
-        //     .iter()
-        //     .enumerate()
-        //     .for_each(|(dimension, is_periodic)| {
-        //         if *is_periodic {
-        //             self.map_vector_to_box_basis(&new_position)
-        //                 .iter()
-        //                 .map(|component| *component / self.dimensions[dimension])
-        //                 .collect::<Vec<f64>>()
-        //                 .iter()
-        //                 .enumerate()
-        //                 .for_each(|(dimension, component)| {
-        //                   new_position[dimension] += match component {
-        //                       x if *x < 0.0 =>  1.0,
-        //                       x if *x > 1.0 =>  -1.0,
-        //                       _ => 0.0,
-        //                   } * self.vectors[dimension];
-        //                 });
-        //         }
-        //     });
-        new_position
+        let wrapped_position = position.clone();
+        wrapped_position
     }
 
     pub fn map_vector_to_box_basis(&self, vector: &Vector3<f64>) -> Vector3<f64> {

@@ -31,7 +31,7 @@ pub fn to_vec_f64<const SIZE: usize>(yaml: &yaml_rust::Yaml) -> [f64; SIZE] {
         })
         .collect::<Vec<f64>>()
         .try_into()
-        .unwrap()
+        .expect("Failed to convert to array")
 }
 
 pub fn to_vec3(yaml: &yaml_rust::Yaml) -> Vector3<f64> {

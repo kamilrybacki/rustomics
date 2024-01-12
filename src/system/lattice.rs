@@ -23,6 +23,24 @@ pub fn generate_lattice(atoms: &mut Vec<Atom>, simulation_box: &SimulationBox) -
     let y_replicas = simulation_box.replicas[1];
     let z_replicas = simulation_box.replicas[2];
 
+    let x_vector: Vector3<f64> = Vector3::new(
+        simulation_box.cell.vectors[(0, 0)],
+        simulation_box.cell.vectors[(0, 1)],
+        simulation_box.cell.vectors[(0, 2)],
+    );
+
+    let y_vector: Vector3<f64> = Vector3::new(
+        simulation_box.cell.vectors[(1, 0)],
+        simulation_box.cell.vectors[(1, 1)],
+        simulation_box.cell.vectors[(1, 2)],
+    );
+
+    let z_vector: Vector3<f64> = Vector3::new(
+        simulation_box.cell.vectors[(2, 0)],
+        simulation_box.cell.vectors[(2, 1)],
+        simulation_box.cell.vectors[(2, 2)],
+    );
+
     let mut generated_atoms = Vec::new();
     for x in 0..x_replicas {
         for y in 0..y_replicas {
@@ -34,12 +52,12 @@ pub fn generate_lattice(atoms: &mut Vec<Atom>, simulation_box: &SimulationBox) -
                     .par_iter()
                     .map(|atom| {
                         let mut new_atom = atom.clone();
-                        new_atom.current.position[0] +=
-                            x as f64 * simulation_box.cell.vectors[(0, 0)];
-                        new_atom.current.position[1] +=
-                            y as f64 * simulation_box.cell.vectors[(1, 1)];
-                        new_atom.current.position[2] +=
-                            z as f64 * simulation_box.cell.vectors[(2, 2)];
+                        new_atom.current.position +=
+                            x as f64 * x_vector;
+                        new_atom.current.position +=
+                            y as f64 * y_vector;
+                        new_atom.current.position +=
+                            z as f64 * z_vector;
                         new_atom
                     })
                     .collect::<Vec<Atom>>();

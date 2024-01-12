@@ -37,12 +37,6 @@ impl NextStepCalculation for VerletIntegrator {
             let half_step_velocity =
                 atom.previous.velocity + 0.5 * self.timestep * atom.previous.force / atom.mass;
             atom.current.position = atom.previous.position + self.timestep * half_step_velocity;
-            if atom.id == 0 {
-                println!(
-                    "{} {} {}",
-                    atom.current.position[0], atom.current.position[1], atom.current.position[2]
-                );
-            }
             potential.update(atom, neighbours);
             atom.current.velocity =
                 half_step_velocity + 0.5 * self.timestep * atom.current.force / atom.mass;

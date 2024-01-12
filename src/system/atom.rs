@@ -1,5 +1,4 @@
-extern crate periodic_table_on_an_enum;
-
+use periodic_table_on_an_enum::Element;
 use nalgebra::Vector3;
 
 use crate::io::input::to_vec3;
@@ -89,7 +88,7 @@ impl Atom {
             yaml_rust::Yaml::String(x) => x.parse::<f64>().unwrap(),
             yaml_rust::Yaml::Integer(x) => *x as f64,
             yaml_rust::Yaml::BadValue => {
-                match periodic_table_on_an_enum::Element::from_symbol(atom.name.as_str()) {
+                match Element::from_symbol(atom.name.as_str()) {
                     Some(x) => x.get_atomic_mass().into(),
                     None => panic!("Failed to find mass for element {}!", atom.name),
                 }

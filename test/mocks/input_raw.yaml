@@ -36,7 +36,7 @@ dynamics:
   integrator:
     type: verlet
   timestep: 0.001
-  steps: 100
+  steps: 10
 thermodynamics:
   ensemble:
     type: nve
