@@ -10,6 +10,7 @@ use crate::dynamics::DynamicsIntegrator;
 use crate::statics::energetics::SystemEnergetics;
 use crate::statics::models::PotentialModel;
 use crate::system::SystemDefinition;
+use crate::thermodynamics::Thermodynamics;
 
 pub struct InternalClock {
     // Definition of the simulation length and time step
@@ -50,6 +51,7 @@ pub struct Simulation {
     pub potential_model: PotentialModel,
     pub neighbours: NeighboursList,
     pub energetics: SystemEnergetics,
+    pub thermodynamics: Thermodynamics,
 }
 
 impl Simulation {
@@ -74,6 +76,7 @@ impl Simulation {
             clock: InternalClock::new(timestep, calculated_total_time),
             neighbours: NeighboursList::from(&yaml["neighbours"]),
             energetics: SystemEnergetics::new(),
+            thermodynamics: Thermodynamics::from(&yaml["thermodynamics"]),
         }
     }
 }

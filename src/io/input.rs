@@ -3,7 +3,7 @@ use yaml_rust::Yaml;
 
 use nalgebra::Vector3;
 
-use crate::system::base::atom::Atom;
+use crate::system::atom::Atom;
 
 pub fn parse_yaml(filepath: &str) -> yaml_rust::Yaml {
     let script_file = read_to_string(&filepath).expect("Failed to read script file");

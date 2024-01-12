@@ -2,7 +2,7 @@ use rayon::prelude::*;
 
 use nalgebra::Vector3;
 
-use crate::system::base::atom::Atom;
+use crate::system::atom::Atom;
 use crate::system::r#box::SimulationBox;
 
 pub fn scale_cell_basis(atoms: &mut Vec<Atom>, simulation_box: &SimulationBox) -> () {

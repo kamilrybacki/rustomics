@@ -1,6 +1,7 @@
-pub mod base;
 pub mod r#box;
-pub mod thermodynamics;
+pub mod atom;
+pub mod lattice;
+pub mod cell;
 
 use nalgebra::Matrix3;
 
@@ -11,9 +12,9 @@ use crate::io::input::load_atoms;
 use crate::io::input::to_vec_f64;
 
 use crate::system::r#box::SimulationBox;
-use crate::system::base::atom::Atom;
-use crate::system::base::lattice::generate_lattice;
-use crate::system::base::lattice::scale_cell_basis;
+use crate::system::atom::Atom;
+use crate::system::lattice::generate_lattice;
+use crate::system::lattice::scale_cell_basis;
 
 use crate::utils::metrics::UnitSystem;
 

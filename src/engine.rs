@@ -1,13 +1,11 @@
 use crate::simulation::Simulation;
 
 use crate::io::input::parse_yaml;
-use crate::system::thermodynamics::Thermodynamics;
 use crate::utils::logger::SimulationLogger;
 
 pub struct SimulationRunnerEngine {
     simulation: Simulation,
     logger: SimulationLogger,
-    thermodynamics: Thermodynamics,
 }
 
 impl SimulationRunnerEngine {
@@ -23,7 +21,6 @@ impl SimulationRunnerEngine {
                 yaml_rust::Yaml::BadValue => SimulationLogger::default(),
                 _ => SimulationLogger::from(&script["logger"]),
             },
-            thermodynamics: Thermodynamics::from(&script["thermodynamics"]),
         };
         return sim;
     }
@@ -44,7 +41,7 @@ impl SimulationRunnerEngine {
             self.simulation
                 .neighbours
                 .update(&mut self.simulation.system);
-            self.thermodynamics.update(&self.simulation);
+            self.simulation.thermodynamics.update();
             self.logger.log_simulation_state(&self.simulation);
             if self.simulation.neighbours.log {
                 self.logger

@@ -5,7 +5,7 @@ use rayon::prelude::*;
 use nalgebra::Vector3;
 
 use crate::dynamics::neighbours::NeighboursList;
-use crate::system::base::atom::Atom;
+use crate::system::atom::Atom;
 
 pub enum PotentialModel {
     LennardJones(lj::LennardJonesModel),

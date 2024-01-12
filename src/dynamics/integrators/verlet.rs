@@ -3,7 +3,7 @@ use rayon::prelude::*;
 use crate::dynamics::neighbours::NeighboursList;
 use crate::dynamics::NextStepCalculation;
 use crate::statics::models::PotentialModel;
-use crate::system::base::atom::Atom;
+use crate::system::atom::Atom;
 
 pub struct VerletIntegrator {
     pub timestep: f64,

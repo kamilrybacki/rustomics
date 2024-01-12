@@ -3,7 +3,7 @@ pub mod neighbours;
 
 use crate::dynamics::neighbours::NeighboursList;
 use crate::statics::models::PotentialModel;
-use crate::system::base::atom::Atom;
+use crate::system::atom::Atom;
 
 pub enum DynamicsIntegrator {
     Verlet(integrators::verlet::VerletIntegrator),

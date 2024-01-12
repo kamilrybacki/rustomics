@@ -5,6 +5,7 @@ mod simulation;
 mod statics;
 mod system;
 mod utils;
+mod thermodynamics;
 
 use engine::SimulationRunnerEngine;
 
