@@ -17,19 +17,19 @@ logger:
     - atoms_positions_file:
       type: xyz
       filename: output_raw.xyz
-    # - stdout:
-    #   type: console
-    #   sections:
-    #     - type: atoms
-    #       format: "id x y z vx vy vz fx fy fz"
-    #     - type: thermodynamics
-    #       format:
-    #         - step
-    #         - time
-    #         - temperature
-    #         - potential_energy
-    #         - kinetic_energy
-    #         - total_energy
+    - stdout:
+      type: console
+      sections:
+        - type: atoms
+          format: "id x y z vx vy vz fx fy fz"
+        - type: thermodynamics
+          format:
+            - step
+            - time
+            - temperature
+            - potential_energy
+            - kinetic_energy
+            - total_energy
   frequency: 1
   precision: 2
 dynamics:

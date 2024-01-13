@@ -67,6 +67,9 @@ pub fn generate_lattice(atoms: &mut Vec<Atom>, simulation_box: &SimulationBox) -
     }
     atoms.append(&mut generated_atoms);
     let new_atoms_length = atoms.len();
+    if new_atoms_length == original_atoms_length {
+        return;
+    }
     println!(
         "Generated {} atoms",
         new_atoms_length - original_atoms_length

@@ -26,6 +26,7 @@ impl SimulationRunnerEngine {
     }
 
     pub fn run(&mut self) -> () {
+        self.simulation.apply_units_system();
         if self.simulation.clock.current_step > 1 {
             self.simulation.clock.reset();
         }

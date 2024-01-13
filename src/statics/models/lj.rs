@@ -32,6 +32,11 @@ impl LennardJonesModel {
 }
 
 impl CalculatePotential for LennardJonesModel {
+    fn apply_units_system(&mut self, units: &crate::utils::metrics::UnitSystem) -> () {
+        self.epsilon *= units.energy.0;
+        self.sigma *= units.distance.0;
+        self.cutoff *= units.distance.0;
+    }
     fn calculate_potential(&self, distance: f64) -> f64 {
         match distance < self.cutoff {
             true => match distance > 0.0 {

@@ -1,7 +1,6 @@
-extern crate yaml_rust;
-
 use core::fmt;
 
+use rayon::prelude::*;
 use yaml_rust::Yaml;
 
 use crate::dynamics::integrators::verlet::VerletIntegrator;
@@ -78,6 +77,28 @@ impl Simulation {
             energetics: SystemEnergetics::new(),
             thermodynamics: Thermodynamics::from(&yaml["thermodynamics"]),
         }
+    }
+    pub fn apply_units_system(&mut self) -> () {
+        self.clock.timestep *= self.system.units.time.0;
+        self.clock.total_time *= self.system.units.time.0;
+        self.clock.current_time *= self.system.units.time.0;
+        self.system.atoms.par_iter_mut().for_each(|atom| {
+            atom.mass *= self.system.units.mass.0;
+            atom.charge *= self.system.units.charge.0;
+            atom.current.position *= self.system.units.distance.0;
+            atom.current.velocity *= self.system.units.distance.0 / self.system.units.time.0;
+            atom.current.force *= self.system.units.force.0;
+            atom.current.kinetic_energy *= self.system.units.energy.0;
+            atom.current.potential_energy *= self.system.units.energy.0;
+            atom.current.total_energy *= self.system.units.energy.0;
+            atom.previous.position *= self.system.units.distance.0;
+            atom.previous.velocity *= self.system.units.distance.0 / self.system.units.time.0;
+            atom.previous.force *= self.system.units.force.0;
+            atom.previous.kinetic_energy *= self.system.units.energy.0;
+            atom.previous.potential_energy *= self.system.units.energy.0;
+            atom.previous.total_energy *= self.system.units.energy.0;
+        });
+        self.potential_model.apply_units_system(&self.system.units);
     }
 }
 

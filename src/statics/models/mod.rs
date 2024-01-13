@@ -6,6 +6,7 @@ use nalgebra::Vector3;
 
 use crate::dynamics::neighbours::NeighboursList;
 use crate::system::atom::Atom;
+use crate::utils::metrics::UnitSystem;
 
 pub enum PotentialModel {
     LennardJones(lj::LennardJonesModel),
@@ -21,6 +22,11 @@ impl PotentialModel {
                 _ => panic!("Potential model not implemented"),
             },
             _ => panic!("Potential model not implemented"),
+        }
+    }
+    pub fn apply_units_system(&mut self, units: &UnitSystem) -> () {
+        match self {
+            PotentialModel::LennardJones(model) => model.apply_units_system(units),
         }
     }
     pub fn update(&self, atom: &mut Atom, neighbours_list: &NeighboursList) -> () {
@@ -47,6 +53,7 @@ impl PotentialModel {
 }
 
 pub trait CalculatePotential {
+    fn apply_units_system(&mut self, units: &UnitSystem) -> ();
     fn calculate_potential(&self, distance: f64) -> f64;
     fn calculate_force(&self, distance: f64) -> f64;
 }
