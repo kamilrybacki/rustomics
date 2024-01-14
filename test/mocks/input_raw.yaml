@@ -1,14 +1,18 @@
 system:
   origin: [0, 0, 0]
   cell:
-    - [8.08, 0, 0]
-    - [0, 8.08, 0]
-    - [0, 0, 8.08]
+    - [4.04, 0, 0]
+    - [0, 4.04, 0]
+    - [0, 0, 4.04]
   atoms:
     - name: Al
       position: [0, 0, 0]
     - name: Al
       position: [0.0, 0.5, 0.5]
+    - name: Al
+      position: [0.5, 0.5, 0.0]
+    - name: Al
+      position: [0.5, 0.0, 0.5]
   periodicity: "xyz"
   units: atomic
   replicas: [1, 1, 1]
@@ -36,7 +40,7 @@ dynamics:
   integrator:
     type: verlet
   timestep: 0.001
-  steps: 10
+  steps: 2
 thermodynamics:
   ensemble:
     type: nve
