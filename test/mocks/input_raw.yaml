@@ -15,7 +15,7 @@ system:
       position: [0.5, 0.0, 0.5]
   periodicity: "xyz"
   units: atomic
-  replicas: [1, 1, 1]
+  replicas: [2, 2, 2]
 logger:
   redirects:
     - atoms_positions_file:
@@ -49,7 +49,7 @@ potential:
   parameters:
     epsilon: 0.4080
     sigma: 2.551
-  cutoff: 8.5
-neighbours:
-  cutoff: 8.5
+  cutoff: 2.87
+neighbors:
+  cutoff: 2.87
   log: false

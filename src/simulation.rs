@@ -4,7 +4,7 @@ use rayon::prelude::*;
 use yaml_rust::Yaml;
 
 use crate::dynamics::integrators::verlet::VerletIntegrator;
-use crate::dynamics::neighbours::NeighboursList;
+use crate::dynamics::neighbors::NeighborsList;
 use crate::dynamics::DynamicsIntegrator;
 use crate::statics::energetics::SystemEnergetics;
 use crate::statics::models::PotentialModel;
@@ -48,7 +48,7 @@ pub struct Simulation {
     pub integrator: DynamicsIntegrator, // Equations of motion numerical integrator
     pub clock: InternalClock,           // Internal clock for the simulation runtime
     pub potential_model: PotentialModel,
-    pub neighbours: NeighboursList,
+    pub neighbors: NeighborsList,
     pub energetics: SystemEnergetics,
     pub thermodynamics: Thermodynamics,
 }
@@ -73,7 +73,7 @@ impl Simulation {
                 _ => panic!("Unknown integrator"),
             },
             clock: InternalClock::new(timestep, calculated_total_time),
-            neighbours: NeighboursList::from(&yaml["neighbours"]),
+            neighbors: NeighborsList::from(&yaml["neighbors"]),
             energetics: SystemEnergetics::new(),
             thermodynamics: Thermodynamics::from(&yaml["thermodynamics"]),
         }

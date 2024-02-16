@@ -1,6 +1,6 @@
 use rayon::prelude::*;
 
-use crate::dynamics::neighbours::NeighboursList;
+use crate::dynamics::neighbors::NeighborsList;
 use crate::dynamics::NextStepCalculation;
 use crate::statics::models::PotentialModel;
 use crate::system::atom::Atom;
@@ -30,14 +30,14 @@ impl NextStepCalculation for VerletIntegrator {
         &mut self,
         atoms: &mut Vec<Atom>,
         potential: &PotentialModel,
-        neighbours: &mut NeighboursList,
+        neighbors: &mut NeighborsList,
     ) -> () {
         atoms.par_iter_mut().for_each(|atom| {
             atom.previous = atom.current.cache();
             let half_step_velocity =
                 atom.previous.velocity + 0.5 * self.timestep * atom.previous.force / atom.mass;
             atom.current.position = atom.previous.position + self.timestep * half_step_velocity;
-            potential.update(atom, neighbours);
+            potential.update(atom, neighbors);
             atom.current.velocity =
                 half_step_velocity + 0.5 * self.timestep * atom.current.force / atom.mass;
         });

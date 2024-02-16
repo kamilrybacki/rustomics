@@ -3,7 +3,7 @@ use std::io::{self, Write};
 
 use rayon::prelude::*;
 
-use crate::dynamics::neighbours::NeighboursList;
+use crate::dynamics::neighbors::NeighborsList;
 use crate::simulation::Simulation;
 
 const DEFAULT_PRECISION: usize = 3;
@@ -69,7 +69,7 @@ fn print_to_file(message: &str) {
 fn construct_format(section_yaml: &yaml_rust::Yaml, section_type: &str) -> Vec<String> {
     let default_formats: HashMap<&str, &str> = HashMap::from([
         ("thermodynamics", "step temperature potential_energy kinetic_energy total_energy"),
-        ("neighbours", "id type x y z"),
+        ("neighbors", "id type x y z"),
         ("atoms", "id type x y z vx vy vz fx fy fz mass charge potential_energy kinetic_energy total_energy"),
         ("xyz", "name x y z")
     ]);
@@ -326,12 +326,12 @@ impl SimulationLogger {
         serialized_log
     }
 
-    pub fn construct_neighbours_list_log(&self, neighbours_list: &NeighboursList) -> () {
-        if neighbours_list.log {
-            println!("Logging neighbours list");
-            let current_neighbours_list = &neighbours_list.neighbours;
-            for (atom_id, neighbours) in current_neighbours_list.iter() {
-                println!("Atom {} has neighbours \n  {:?}", atom_id, neighbours);
+    pub fn construct_neighbors_list_log(&self, neighbors_list: &NeighborsList) -> () {
+        if neighbors_list.log {
+            println!("Logging neighbors list");
+            let current_neighbors_list = &neighbors_list.neighbors;
+            for (atom_id, neighbors) in current_neighbors_list.iter() {
+                println!("Atom {} has neighbors \n  {:?}", atom_id, neighbors);
             }
         }
     }

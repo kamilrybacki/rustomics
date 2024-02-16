@@ -1,9 +1,9 @@
 pub mod integrators;
-pub mod neighbours;
+pub mod neighbors;
 
 use rayon::prelude::*;
 
-use crate::dynamics::neighbours::NeighboursList;
+use crate::dynamics::neighbors::NeighborsList;
 use crate::statics::models::PotentialModel;
 use crate::system::atom::Atom;
 use crate::utils::metrics::UnitSystem;
@@ -29,7 +29,7 @@ impl DynamicsIntegrator {
         &mut self,
         atoms: &mut Vec<Atom>,
         potential: &PotentialModel,
-        neighbours: &mut NeighboursList,
+        neighbors: &mut NeighborsList,
         unit_system: &UnitSystem,
     ) -> () {
         atoms.
@@ -38,7 +38,7 @@ impl DynamicsIntegrator {
                 self.convert(atom, unit_system);
             });
         match self {
-            DynamicsIntegrator::Verlet(x) => x.next_step(atoms, potential, neighbours),
+            DynamicsIntegrator::Verlet(x) => x.next_step(atoms, potential, neighbors),
         };
         atoms.
             par_iter_mut().
@@ -64,7 +64,7 @@ trait NextStepCalculation {
         &mut self,
         atoms: &mut Vec<Atom>,
         potential: &PotentialModel,
-        neighbours: &mut NeighboursList,
+        neighbors: &mut NeighborsList,
     ) -> () {
         panic!("Not implemented");
     }

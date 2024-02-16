@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, ops::Deref};
 
 use nalgebra::Vector3;
 
@@ -6,20 +6,21 @@ use crate::system::SystemDefinition;
 
 use rayon::prelude::*;
 
-pub struct NeighboursList {
-    pub neighbours: HashMap<u64, Vec<(u64, Vector3<f64>, f64)>>,
-    pub log: bool,
-    cutoff: f64,
-}
 
-#[derive(Debug)]
-pub struct NeighboursListEntry {
+#[derive(Debug, Clone)]
+pub struct NeighborsListEntry {
     pub index: u64,
     pub distance_vector: Vector3<f64>,
     pub distance: f64,
 }
 
-impl std::fmt::Display for NeighboursListEntry {
+pub struct NeighborsList {
+    pub neighbors: HashMap<u64, Vec<NeighborsListEntry>>,
+    pub log: bool,
+    cutoff: f64,
+}
+
+impl std::fmt::Display for NeighborsListEntry {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(
             f,
@@ -29,36 +30,36 @@ impl std::fmt::Display for NeighboursListEntry {
     }
 }
 
-impl NeighboursList {
-    pub fn from(neighbours_settings: &yaml_rust::Yaml) -> NeighboursList {
-        NeighboursList {
-            neighbours: HashMap::new(),
-            cutoff: match &neighbours_settings["cutoff"] {
+impl NeighborsList {
+    pub fn from(neighbors_settings: &yaml_rust::Yaml) -> NeighborsList {
+        NeighborsList {
+            neighbors: HashMap::new(),
+            cutoff: match &neighbors_settings["cutoff"] {
                 yaml_rust::Yaml::Real(cutoff) => match cutoff.parse::<f64>() {
                     Ok(cutoff) => cutoff,
                     Err(_) => panic!("Cutoff must be a real number"),
                 },
                 _ => panic!("Cutoff must be a real number"),
             },
-            log: match &neighbours_settings["log"] {
+            log: match &neighbors_settings["log"] {
                 yaml_rust::Yaml::Boolean(log) => *log,
                 _ => panic!("Log must be a boolean"),
             },
         }
     }
     fn update_for_atom(&mut self, index: usize, system: &SystemDefinition) -> () {
-        let new_neighbours = system
+        let new_neighbors = system
             .atoms
             .par_iter()
             .enumerate()
             .filter(|(j, _)| *j != index)
-            .map(|(neighbour_index, neighbour)| {
+            .map(|(neighbor_index, neighbor)| {
                 let mut distance_vector = Vector3::<f64>::new(
-                    neighbour.current.position[0]
+                    neighbor.current.position[0]
                         - system.atoms[index as usize].current.position[0],
-                    neighbour.current.position[1]
+                    neighbor.current.position[1]
                         - system.atoms[index as usize].current.position[1],
-                    neighbour.current.position[2]
+                    neighbor.current.position[2]
                         - system.atoms[index as usize].current.position[2],
                 );
                 system
@@ -72,50 +73,44 @@ impl NeighboursList {
                             distance_vector.dot(&basis_vector) / basis_vector.norm();
                         let relative_coordinate = distance_vector_projection / basis_vector.norm();
                         let minimum_image_coefficient =
-                            (relative_coordinate <= -0.5) as i64 as f64 * -1.0;
+                            (relative_coordinate <= -0.5) as i64 as f64 + (relative_coordinate > 0.5) as i64 as f64 * -1.;
                         if minimum_image_coefficient != 0.0 {
                             distance_vector += minimum_image_coefficient * basis_vector;
                         };
                     });
-                (
-                    neighbour_index as u64,
-                    distance_vector,
-                    distance_vector.norm(),
-                )
+                NeighborsListEntry {
+                    index: neighbor_index as u64,
+                    distance_vector: distance_vector,
+                    distance: distance_vector.norm(),
+                }
             })
-            .filter(|(_, _, distance)| *distance < self.cutoff)
-            .collect::<Vec<(u64, Vector3<f64>, f64)>>();
-        self.neighbours
-            .insert(index.try_into().unwrap(), new_neighbours);
+            .filter(|entry| entry.distance < self.cutoff)
+            .collect::<Vec<NeighborsListEntry>>();
+        self.neighbors
+            .insert(index.try_into().unwrap(), new_neighbors);
     }
     pub fn update(&mut self, system: &mut SystemDefinition) -> () {
         system.wrap_atom_positions();
-        self.neighbours.clear();
+        self.neighbors.clear();
         system
             .atoms
             .iter()
             .enumerate()
             .for_each(|(index, _)| self.update_for_atom(index, system));
     }
-    pub fn get_neighbours(&self, index: u64) -> Vec<NeighboursListEntry> {
-        match self.neighbours.get(&(index as u64)) {
+    pub fn get_neighbors(&self, index: u64) -> Vec<NeighborsListEntry> {
+        match self.neighbors.get(&(index as u64)) {
             None => {
-                panic!("No neighbours for index {}", index)
+                println!("No neighbors for index {}", index);
+                vec![]
             }
-            Some(neighbours) => neighbours
-                .iter()
-                .map(|(i, distance_vector, distance)| NeighboursListEntry {
-                    index: *i,
-                    distance_vector: *distance_vector,
-                    distance: *distance,
-                })
-                .collect(),
+            Some(neighbors) => neighbors.clone(),
         }
     }
 }
 
-impl std::fmt::Display for NeighboursList {
+impl std::fmt::Display for NeighborsList {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "{:?}", self.neighbours)
+        write!(f, "{:?}", self.neighbors)
     }
 }

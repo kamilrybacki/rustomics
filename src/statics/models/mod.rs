@@ -2,7 +2,7 @@ mod lj;
 
 use nalgebra::Vector3;
 
-use crate::dynamics::neighbours::NeighboursList;
+use crate::dynamics::neighbors::NeighborsList;
 use crate::system::atom::Atom;
 
 pub enum PotentialModel {
@@ -21,25 +21,25 @@ impl PotentialModel {
             _ => panic!("Potential model not implemented"),
         }
     }
-    pub fn update(&self, atom: &mut Atom, neighbours_list: &NeighboursList) -> () {
+    pub fn update(&self, atom: &mut Atom, neighbors_list: &NeighborsList) -> () {
         atom.current.potential_energy = 0.0;
         atom.current.force = Vector3::new(0.0, 0.0, 0.0);
-        neighbours_list
-            .get_neighbours(atom.id as u64)
+        neighbors_list
+            .get_neighbors(atom.id as u64)
             .iter_mut()
-            .for_each(|neighbour| {
+            .for_each(|neighbor| {
                 let current_pair_potential_energy = match self {
                     PotentialModel::LennardJones(model) => {
-                        model.calculate_potential(neighbour.distance)
+                        model.calculate_potential(neighbor.distance)
                     }
                 };
                 atom.current.potential_energy += current_pair_potential_energy;
                 let force = match self {
                     PotentialModel::LennardJones(model) => {
-                        model.calculate_force(neighbour.distance)
+                        model.calculate_force(neighbor.distance)
                     }
                 };
-                atom.current.force += -force * neighbour.distance_vector.normalize();
+                atom.current.force += -force * neighbor.distance_vector.normalize();
             });
     }
 }
